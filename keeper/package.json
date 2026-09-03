@@ -1,0 +1,14 @@
+{
+  "name": "mag7-index-keeper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "post-prices": "node post-prices.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0",
+    "voxelithic-interfaces": "^0.5.2"
+  }
+}
