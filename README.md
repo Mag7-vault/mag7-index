@@ -10,6 +10,10 @@ rebalance. `maxWithdraw` and `maxRedeem` report only that immediately liquid
 amount. A withdrawal larger than the available buffer requires the keeper to
 sell basket assets back to USDG first; v1 deliberately does not attempt to
 construct a live route and slippage limit inside a user's redemption.
+If prices are stale or the keeper is unavailable, `redeemInKind()` remains a
+price-independent escape hatch that returns the holder's pro-rata USDG and
+basket tokens directly. A keeper can also use the strictly basket-to-USDG
+`restoreLiquidity()` path without relying on fresh oracle data.
 
 This is a **scaffold**, not an audited, deploy-ready product — see "Open
 items" before anyone puts real money in it.

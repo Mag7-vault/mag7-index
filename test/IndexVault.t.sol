@@ -7,6 +7,7 @@ import {IndexVault} from "../src/IndexVault.sol";
 import {PriceOracle} from "../src/PriceOracle.sol";
 import {IVoxRouter} from "../src/interfaces/IVoxRouter.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
+import {MockReentrantERC20} from "./mocks/MockReentrantERC20.sol";
 import {MockVoxRouter} from "./mocks/MockVoxRouter.sol";
 
 contract IndexVaultTest is Test {
@@ -20,6 +21,7 @@ contract IndexVaultTest is Test {
     address owner = makeAddr("owner");
     address keeper = makeAddr("keeper");
     address alice = makeAddr("alice");
+    address bob = makeAddr("bob");
 
     function setUp() public {
         usdg = new MockERC20("USDG", "USDG", 6);
@@ -217,6 +219,209 @@ contract IndexVaultTest is Test {
         assertEq(usdg.balanceOf(address(vault)), 0);
         assertEq(vault.maxWithdraw(alice), 0);
         assertEq(vault.maxRedeem(alice), 0);
+    }
+
+    function test_redeemInKindWorksWhilePausedWithStalePrice() public {
+        vm.prank(alice);
+        uint256 shares = vault.deposit(1_000e6, alice);
+
+        router.setRate(address(usdg), address(nvda), 1e18 * 1e12);
+        _postNvdaPrice(1e6);
+
+        IVoxRouter.Hop[] memory hops = new IVoxRouter.Hop[](0);
+        IndexVault.RebalanceLeg[] memory legs = new IndexVault.RebalanceLeg[](1);
+        legs[0] = IndexVault.RebalanceLeg({
+            tokenIn: address(usdg),
+            tokenOut: address(nvda),
+            amountIn: 800e6,
+            minOut: 800e18,
+            deadline: block.timestamp + 1 hours,
+            hops: hops
+        });
+        vm.prank(keeper);
+        vault.rebalance(legs);
+
+        vm.warp(block.timestamp + 2 hours);
+        vm.prank(owner);
+        vault.pause();
+
+        vm.expectRevert();
+        vault.maxRedeem(alice);
+
+        uint256 aliceUsdgBefore = usdg.balanceOf(alice);
+        vm.prank(alice);
+        (uint256 usdgOut, uint256[] memory basketAmounts) = vault.redeemInKind(shares, alice, alice);
+
+        assertEq(usdgOut, 200e6);
+        assertEq(basketAmounts[0], 800e18);
+        assertEq(basketAmounts[1], 0);
+        assertEq(usdg.balanceOf(alice) - aliceUsdgBefore, 200e6);
+        assertEq(nvda.balanceOf(alice), 800e18);
+        assertEq(vault.totalSupply(), 0);
+    }
+
+    function test_redeemInKindWorksWithMissingPrice() public {
+        vm.prank(alice);
+        uint256 shares = vault.deposit(1_000e6, alice);
+        nvda.mint(address(vault), 10e18);
+
+        vm.expectRevert(abi.encodeWithSelector(PriceOracle.NoPrice.selector, address(nvda)));
+        vault.totalAssets();
+
+        vm.prank(alice);
+        (uint256 usdgOut, uint256[] memory basketAmounts) = vault.redeemInKind(shares, alice, alice);
+
+        assertEq(usdgOut, 1_000e6);
+        assertEq(basketAmounts[0], 10e18);
+        assertEq(nvda.balanceOf(alice), 10e18);
+    }
+
+    function test_redeemInKindHonorsDelegatedAllowance() public {
+        vm.prank(alice);
+        vault.deposit(1_000e6, alice);
+
+        vm.prank(bob);
+        vm.expectRevert();
+        vault.redeemInKind(400e6, bob, alice);
+
+        vm.prank(alice);
+        vault.approve(bob, 400e6);
+
+        vm.prank(bob);
+        (uint256 usdgOut,) = vault.redeemInKind(400e6, bob, alice);
+
+        assertEq(usdgOut, 400e6);
+        assertEq(usdg.balanceOf(bob), 400e6);
+        assertEq(vault.balanceOf(alice), 600e6);
+        assertEq(vault.allowance(alice, bob), 0);
+    }
+
+    function test_redeemInKindBlocksCrossFunctionReentrancy() public {
+        MockReentrantERC20 reentrantToken = new MockReentrantERC20();
+
+        address[] memory basket = new address[](2);
+        basket[0] = address(reentrantToken);
+        basket[1] = address(aapl);
+        uint16[] memory weights = new uint16[](2);
+        weights[0] = 5_000;
+        weights[1] = 5_000;
+        vm.prank(owner);
+        vault.setBasket(basket, weights);
+
+        usdg.mint(bob, 1_000e6);
+        vm.prank(bob);
+        usdg.approve(address(vault), type(uint256).max);
+
+        vm.prank(alice);
+        vault.deposit(1_000e6, alice);
+        vm.prank(bob);
+        vault.deposit(1_000e6, bob);
+
+        reentrantToken.mint(address(vault), 200e18);
+        aapl.mint(address(vault), 200e18);
+        address[] memory toks = new address[](2);
+        toks[0] = address(reentrantToken);
+        toks[1] = address(aapl);
+        uint256[] memory prices = new uint256[](2);
+        prices[0] = 1e6;
+        prices[1] = 1e6;
+        vm.prank(keeper);
+        oracle.postPrices(toks, prices);
+
+        usdg.mint(address(reentrantToken), 10e6);
+        reentrantToken.configureAttack(address(vault), address(usdg), alice, alice);
+        vm.prank(alice);
+        vault.approve(address(reentrantToken), 500e6);
+
+        vm.prank(alice);
+        (uint256 usdgOut, uint256[] memory basketAmounts) = vault.redeemInKind(500e6, alice, alice);
+
+        assertTrue(reentrantToken.attacked());
+        assertFalse(reentrantToken.depositSucceeded());
+        assertFalse(reentrantToken.mintSucceeded());
+        assertFalse(reentrantToken.withdrawSucceeded());
+        assertFalse(reentrantToken.redeemSucceeded());
+        assertEq(usdgOut, 500e6);
+        assertEq(basketAmounts[0], 50e18);
+        assertEq(basketAmounts[1], 50e18);
+        assertEq(vault.balanceOf(alice), 500e6);
+        assertEq(vault.balanceOf(bob), 1_000e6);
+
+        (uint256 bobUsdg, uint256[] memory bobBasket) = vault.previewRedeemInKind(vault.balanceOf(bob));
+        assertEq(bobUsdg, 1_000e6);
+        assertEq(bobBasket[0], 100e18);
+        assertEq(bobBasket[1], 100e18);
+    }
+
+    function test_restoreLiquidityWorksWithStalePriceAndUnblocksStandardRedeem() public {
+        vm.prank(alice);
+        uint256 shares = vault.deposit(1_000e6, alice);
+
+        router.setRate(address(usdg), address(nvda), 1e18 * 1e12);
+        _postNvdaPrice(1e6);
+
+        IVoxRouter.Hop[] memory hops = new IVoxRouter.Hop[](0);
+        IndexVault.RebalanceLeg[] memory buyLegs = new IndexVault.RebalanceLeg[](1);
+        buyLegs[0] = IndexVault.RebalanceLeg({
+            tokenIn: address(usdg),
+            tokenOut: address(nvda),
+            amountIn: 800e6,
+            minOut: 800e18,
+            deadline: block.timestamp + 1 hours,
+            hops: hops
+        });
+        vm.prank(keeper);
+        vault.rebalance(buyLegs);
+
+        vm.warp(block.timestamp + 2 hours);
+        router.setRate(address(nvda), address(usdg), 1e6);
+
+        IndexVault.RebalanceLeg[] memory sellLegs = new IndexVault.RebalanceLeg[](1);
+        sellLegs[0] = IndexVault.RebalanceLeg({
+            tokenIn: address(nvda),
+            tokenOut: address(usdg),
+            amountIn: 800e18,
+            minOut: 800e6,
+            deadline: block.timestamp + 1 hours,
+            hops: hops
+        });
+        vm.prank(keeper);
+        vault.restoreLiquidity(sellLegs);
+
+        assertEq(nvda.balanceOf(address(vault)), 0);
+        assertEq(usdg.balanceOf(address(vault)), 1_000e6);
+        assertEq(vault.maxRedeem(alice), shares);
+
+        vm.prank(alice);
+        assertEq(vault.redeem(shares, alice, alice), 1_000e6);
+    }
+
+    function test_restoreLiquidityRejectsAllocationChangingTradeAndPause() public {
+        IVoxRouter.Hop[] memory hops = new IVoxRouter.Hop[](0);
+        IndexVault.RebalanceLeg[] memory legs = new IndexVault.RebalanceLeg[](1);
+        legs[0] = IndexVault.RebalanceLeg({
+            tokenIn: address(usdg),
+            tokenOut: address(nvda),
+            amountIn: 1e6,
+            minOut: 1,
+            deadline: block.timestamp + 1 hours,
+            hops: hops
+        });
+
+        vm.prank(keeper);
+        vm.expectRevert(
+            abi.encodeWithSelector(IndexVault.InvalidLiquidityRestore.selector, address(usdg), address(nvda))
+        );
+        vault.restoreLiquidity(legs);
+
+        legs[0].tokenIn = address(nvda);
+        legs[0].tokenOut = address(usdg);
+        vm.prank(owner);
+        vault.pause();
+
+        vm.prank(keeper);
+        vm.expectRevert();
+        vault.restoreLiquidity(legs);
     }
 
     function test_totalAssetsPricesBasketTokensFromOracle() public {

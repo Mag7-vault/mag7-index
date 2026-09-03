@@ -8,6 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IVoxRouter} from "./interfaces/IVoxRouter.sol";
 import {PriceOracle} from "./PriceOracle.sol";
 
@@ -23,7 +24,7 @@ import {PriceOracle} from "./PriceOracle.sol";
 ///           - v3-venue router only (VoxRouter), not the v4 singleton router
 ///           - pause never disables withdrawals, although immediate exits remain limited
 ///             to the idle USDG buffer reported by maxWithdraw/maxRedeem
-contract IndexVault is ERC4626, Ownable, Pausable {
+contract IndexVault is ERC4626, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct RebalanceLeg {
@@ -55,6 +56,9 @@ contract IndexVault is ERC4626, Ownable, Pausable {
     event KeeperSet(address indexed keeper, bool allowed);
     event DepositCapSet(uint256 cap);
     event Rebalanced(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
+    event InKindRedeemed(
+        address indexed caller, address indexed receiver, address indexed owner, uint256 shares, uint256 usdgOut
+    );
 
     error NotKeeper();
     error BadWeights();
@@ -63,6 +67,8 @@ contract IndexVault is ERC4626, Ownable, Pausable {
     error InvalidBasketToken(address token);
     error BasketTokenStillHeld(address token, uint256 balance);
     error InvalidRebalanceToken(address token);
+    error InvalidLiquidityRestore(address tokenIn, address tokenOut);
+    error InsufficientSwapOutput(uint256 received, uint256 minimum);
     error InsufficientIdleLiquidity(uint256 available, uint256 required);
 
     modifier onlyKeeper() {
@@ -181,6 +187,27 @@ contract IndexVault is ERC4626, Ownable, Pausable {
         if (idleUsdg < minimumIdleUsdg) revert InsufficientIdleLiquidity(idleUsdg, minimumIdleUsdg);
     }
 
+    /// @notice Sells basket assets back to USDG even when oracle prices are
+    ///         stale or missing. Every leg must strictly increase USDG
+    ///         liquidity; allocation-changing trades still use rebalance().
+    function restoreLiquidity(RebalanceLeg[] calldata legs) external onlyKeeper whenNotPaused {
+        for (uint256 i = 0; i < legs.length; i++) {
+            RebalanceLeg calldata leg = legs[i];
+            if (targetWeightBps[leg.tokenIn] == 0 || leg.tokenOut != asset()) {
+                revert InvalidLiquidityRestore(leg.tokenIn, leg.tokenOut);
+            }
+
+            uint256 usdgBefore = IERC20(asset()).balanceOf(address(this));
+            IERC20(leg.tokenIn).forceApprove(address(router), leg.amountIn);
+            router.swapExactIn(leg.tokenIn, leg.tokenOut, leg.amountIn, leg.minOut, leg.deadline, leg.hops);
+            uint256 usdgAfter = IERC20(asset()).balanceOf(address(this));
+            uint256 received = usdgAfter - usdgBefore;
+            if (received < leg.minOut) revert InsufficientSwapOutput(received, leg.minOut);
+
+            emit Rebalanced(leg.tokenIn, leg.tokenOut, leg.amountIn, received);
+        }
+    }
+
     // ---------------------------------------------------------------------
     // ERC4626 overrides
     // ---------------------------------------------------------------------
@@ -224,6 +251,62 @@ contract IndexVault is ERC4626, Ownable, Pausable {
         uint256 ownerShares = super.maxRedeem(owner_);
         uint256 liquidShares = convertToShares(IERC20(asset()).balanceOf(address(this)));
         return ownerShares < liquidShares ? ownerShares : liquidShares;
+    }
+
+    /// @notice Returns the pro-rata assets delivered by redeemInKind without
+    ///         reading the price oracle. This remains available when prices
+    ///         are missing or stale.
+    function previewRedeemInKind(uint256 shares) public view returns (uint256 usdgOut, uint256[] memory basketAmounts) {
+        uint256 supply = totalSupply();
+        basketAmounts = new uint256[](basketTokens.length);
+        if (shares == 0 || supply == 0) return (0, basketAmounts);
+
+        usdgOut = Math.mulDiv(IERC20(asset()).balanceOf(address(this)), shares, supply);
+        for (uint256 i = 0; i < basketTokens.length; i++) {
+            basketAmounts[i] = Math.mulDiv(IERC20(basketTokens[i]).balanceOf(address(this)), shares, supply);
+        }
+    }
+
+    /// @notice Burns shares for the holder's pro-rata USDG and basket tokens.
+    ///         Unlike standard ERC-4626 redemption, this emergency exit does
+    ///         not depend on oracle freshness or idle USDG liquidity.
+    function redeemInKind(uint256 shares, address receiver, address owner_)
+        external
+        nonReentrant
+        returns (uint256 usdgOut, uint256[] memory basketAmounts)
+    {
+        if (receiver == address(0)) revert ERC20InvalidReceiver(address(0));
+
+        uint256 ownerShares = balanceOf(owner_);
+        if (shares > ownerShares) revert ERC4626ExceededMaxRedeem(owner_, shares, ownerShares);
+        if (shares == 0) return previewRedeemInKind(0);
+
+        if (msg.sender != owner_) _spendAllowance(owner_, msg.sender, shares);
+        (usdgOut, basketAmounts) = previewRedeemInKind(shares);
+
+        _burn(owner_, shares);
+
+        if (usdgOut != 0) IERC20(asset()).safeTransfer(receiver, usdgOut);
+        for (uint256 i = 0; i < basketTokens.length; i++) {
+            if (basketAmounts[i] != 0) IERC20(basketTokens[i]).safeTransfer(receiver, basketAmounts[i]);
+        }
+
+        emit InKindRedeemed(msg.sender, receiver, owner_, shares, usdgOut);
+    }
+
+    /// @dev Share-mutating ERC-4626 paths use the same mutex as in-kind exits,
+    ///      preventing a callback token from crossing between exit modes while
+    ///      a pro-rata basket transfer is only partially complete.
+    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override nonReentrant {
+        super._deposit(caller, receiver, assets, shares);
+    }
+
+    function _withdraw(address caller, address receiver, address owner_, uint256 assets, uint256 shares)
+        internal
+        override
+        nonReentrant
+    {
+        super._withdraw(caller, receiver, owner_, assets, shares);
     }
 
     function deposit(uint256 assets, address receiver) public override whenNotPaused returns (uint256) {
