@@ -1,0 +1,14 @@
+{
+  "source": "https://voxelithic.xyz/api/v1/quote",
+  "chainId": 4663,
+  "observedAt": "2026-09-04",
+  "note": "Discovery evidence only. The keeper fetches a fresh route before every trade.",
+  "tokenToUsdg": {
+    "NVDA": { "family": "v3", "pool": "0xd4eb21209c4d6093f80b5b84f5c45cc093ea14a3" },
+    "AAPL": { "family": "v3", "pool": "0xaae0d815ee56e4092a5e5c2911e676fea50b2d6d" },
+    "TSLA": { "family": "v3", "pool": "0xf4acdaeeb7022862a763c9b1b885e11191c889e3" },
+    "GOOGL": { "family": "v3", "pool": "0x34d0dc122cf9a8eb296fc5e0d3a233625d7d19b7" },
+    "META": { "family": "v4", "pool": "0x5875d407a42965b0e768c8925cea290e06fa50603ef34fc99eb92a1050e6ae36" },
+    "AMZN": { "family": "v3", "pool": "0x8ac92da74ab5f3b1d024dc1943ad7e15dc4179ef" }
+  }
+}

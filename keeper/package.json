@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "post-prices": "node post-prices.mjs"
+    "post-prices": "node post-prices.mjs",
+    "rebalance": "node rebalance.mjs",
+    "health": "node health.mjs",
+    "test": "node --test"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
