@@ -19,17 +19,18 @@ contract Deploy is Script {
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
-        address keeper = vm.envOr("KEEPER_ADDRESS", deployer);
+        address oracleKeeper = vm.envOr("ORACLE_KEEPER_ADDRESS", deployer);
+        address rebalanceKeeper = vm.envOr("REBALANCE_KEEPER_ADDRESS", deployer);
         uint256 initialCap = vm.envOr("INITIAL_DEPOSIT_CAP", uint256(10_000e6)); // USDG is 6dec
 
         vm.startBroadcast(deployerKey);
 
         PriceOracle oracle = new PriceOracle(deployer);
-        oracle.setKeeper(keeper, true);
+        oracle.setKeeper(oracleKeeper, true);
 
         IndexVault vault =
             new IndexVault(IERC20(Tokens.USDG), IVoxRouter(RobinhoodChain.VOX_ROUTER), oracle, deployer, initialCap);
-        vault.setKeeper(keeper, true);
+        vault.setKeeper(rebalanceKeeper, true);
 
         address[] memory basket = new address[](6);
         basket[0] = Tokens.NVDA;

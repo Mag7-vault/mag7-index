@@ -1,4 +1,4 @@
-# Mag7 Index Vault — scaffold
+# Mag7 Index Vault
 
 ERC-4626 vault on Robinhood Chain (4663) that holds a basket of tokenized
 equities, priced and traded through Voxelithic's live router/quoter. Deposit
@@ -15,8 +15,7 @@ price-independent escape hatch that returns the holder's pro-rata USDG and
 basket tokens directly. A keeper can also use the strictly basket-to-USDG
 `restoreLiquidity()` path without relying on fresh oracle data.
 
-This is a **scaffold**, not an audited, deploy-ready product — see "Open
-items" before anyone puts real money in it.
+This is an **unaudited pre-production build**, not approved for real deposits.
 
 ## What's real here
 
@@ -69,7 +68,10 @@ test/
 script/
   Deploy.s.sol           deploys oracle + vault, sets initial basket
 keeper/
-  post-prices.mjs        cron job: quote basket -> post to PriceOracle
+  voxelithic.mjs         validated live API adapter and v3 route conversion
+  post-prices.mjs        quote basket -> post to PriceOracle
+  rebalance.mjs          dry-run-first allocation/liquidity route builder
+  health.mjs             machine-readable RPC/API/oracle/buffer health check
 ```
 
 ## Setup
@@ -77,12 +79,12 @@ keeper/
 ```bash
 # contracts
 forge install                      # pulls OZ + forge-std if not already vendored
-cp .env.example .env                # fill in RPC, keys, cap
+cp .env.example .env                # fill in addresses and scoped keys
 forge build
 forge test -vvv
 
 # keeper
-cd keeper && npm install
+cd keeper && npm ci && npm test
 ```
 
 Note: `lib/openzeppelin-contracts` and `lib/forge-std` are already vendored
@@ -95,7 +97,7 @@ here — it's pinned to each repo's default branch as of 2026-09-03.
 
 ```bash
 forge script script/Deploy.s.sol \
-  --rpc-url robinhood_chain \
+  --rpc-url robinhood_mainnet \
   --broadcast \
   --verify
 ```
@@ -103,30 +105,41 @@ forge script script/Deploy.s.sol \
 Prints the `PriceOracle` and `IndexVault` addresses — put the oracle
 address into `keeper/.env` as `PRICE_ORACLE_ADDRESS`.
 
-## Open items before this is demo-ready
+## Live route status
 
-1. **Pool addresses for the keeper script.** `VoxQuoter.quoteExactIn` prices
-   a specific pool, not a token pair — `keeper/post-prices.mjs` has
-   placeholder pool addresses that need to come from Voxelithic's registry
-   (`voxelithic.xyz/registry`) or their MCP server (`npx voxelithic-mcp`,
-   which exposes a "quote a pair" tool that likely does this lookup for
-   you). This is the one piece we couldn't pull automatically.
-2. **Rebalance route building.** `IndexVault.rebalance()` takes
-   pre-built `Hop[]` calldata — nothing in this scaffold computes those
-   hops yet. That's a second off-chain script in the same spirit as
-   `post-prices.mjs`, querying the same quoter (or Voxelithic's HTTP API /
-   MCP tools) for a route, then calling `rebalance()` with it.
-3. **v4 pools are out of scope.** Half of Voxelithic's liquidity is on
-   Uniswap v4 (via `VoxRouterV4`/`VoxQuoterV4`, singleton pattern). This
-   scaffold only integrates the v3-style `VoxRouter`. Fine for v1 — NVDA,
-   AAPL, TSLA etc. all show liquidity on the v3 side too — but worth a line
-   in the pitch deck so nobody's surprised later.
-4. **No audit.** Contracts are unaudited. Both DOSS and Voxelithic put an
-   audit or an explicit "no audit yet" notice front and center — do the
-   same before any real deposit cap goes above token-amounts.
-5. **Weighting is static.** Weights are owner-set once via `setBasket()`.
-   Market-cap weighting, or a self-rebalancing trigger, is a real v2 item,
-   not a v1 blocker.
+Pool discovery and route construction now use Voxelithic's live HTTP API.
+`keeper/routes.snapshot.json` records the 2026-09-04 discovery result, while
+every executable keeper run fetches fresh routes and `minOut` values. NVDA,
+AAPL, TSLA, GOOGL, and AMZN resolved to v3 pools. META resolved only to a v4
+pool; the v1 keeper fails closed instead of submitting incompatible calldata.
+
+## Testnet
+
+Robinhood mainnet is chain `4663`; testnet is `46630`. The canonical tokens
+and Voxelithic contracts used here are published for mainnet, not testnet.
+`DeployTestnetDemo.s.sol` therefore deploys a prominently labeled demo-token
+and deterministic-router stack for mechanics testing only. It exercises a
+10 USDG deposit, six buys, and the 20% buffer with a 1,000 demo-USDG cap:
+
+```bash
+forge script script/DeployTestnetDemo.s.sol:DeployTestnetDemo \
+  --rpc-url robinhood_testnet --broadcast
+```
+
+This does not count as a Voxelithic integration test. The fork test does verify
+the canonical mainnet contract code and metadata without moving funds.
+
+## Open items before real-money launch
+
+1. Add `VoxRouterV4` execution or replace META with an asset that has a v3
+   venue; the current basket cannot reach its full target allocation.
+2. Obtain an independent smart-contract/economic audit and remediate findings.
+3. Move owner powers to a Safe/timelock and run keeper keys from a managed
+   signer with alerting; see `keeper/README.md`.
+4. Complete a funded official-testnet demo, then a tiny mainnet canary after
+   explicit approval. Testnet currently validates mechanics, not Voxel routes.
+5. Static weighting remains intentional v1 scope; market-cap weights and
+   permissionless triggers are v2 work.
 
 ## Demo script (for the client pitch)
 

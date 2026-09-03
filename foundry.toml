@@ -9,10 +9,12 @@ via_ir = false
 fs_permissions = [{ access = "read", path = "./" }]
 
 [rpc_endpoints]
-robinhood_chain = "${ROBINHOOD_CHAIN_RPC}"
+robinhood_mainnet = "${ROBINHOOD_MAINNET_RPC}"
+robinhood_testnet = "${ROBINHOOD_TESTNET_RPC}"
 
 [etherscan]
-robinhood_chain = { key = "${BLOCKSCOUT_API_KEY}", url = "https://robinhoodchain.blockscout.com/api" }
+robinhood_mainnet = { key = "${BLOCKSCOUT_API_KEY}", url = "https://robinhoodchain.blockscout.com/api" }
+robinhood_testnet = { key = "${BLOCKSCOUT_API_KEY}", url = "https://explorer.testnet.chain.robinhood.com/api" }
 
 # forge test -vvv
-# forge script script/Deploy.s.sol --rpc-url robinhood_chain --broadcast --verify
+# forge script script/Deploy.s.sol --rpc-url robinhood_mainnet --broadcast --verify
