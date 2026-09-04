@@ -126,6 +126,8 @@ Invariant runs use 256 runs × 500 calls by default (`foundry.toml`).
 
 ## 7. Documents in this package
 
+- [`handoff.md`](./handoff.md) — **start here if you are the auditor**: the exact
+  commit under review, build/reproduce steps, scope, and where to focus.
 - [`threat-model.md`](./threat-model.md) — actors, assets, attack surface, and
   the mitigation for each threat.
 - [`invariants.md`](./invariants.md) — the properties the system must always
