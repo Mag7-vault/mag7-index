@@ -1,7 +1,9 @@
 # MAG7 Index Vault — Marketing and Communications Brief
 
-**Document status:** Pre-launch working brief  
-**Audience:** Founders, marketing, partnerships, community, and content teams  
+**Document status:** Pre-launch working brief
+
+**Audience:** Founders, marketing, partnerships, community, and content teams
+
 **Product status:** Tested pre-production software. Not deployed for public deposits and not independently audited.
 
 ## 1. Executive summary
@@ -227,22 +229,26 @@ qualified legal counsel before publication.
 Deposit USDG, receive one transparent vault share, and access a managed basket
 of tokenized US equities on Robinhood Chain.
 
-**Primary CTA:** Join the waitlist  
+**Primary CTA:** Join the waitlist
+
 **Secondary CTA:** Explore how it works
 
 Pre-launch software. Not yet independently audited or open for public deposits.
 
 ### Three feature cards
 
-**One vault position**  
+**One vault position**
+
 Access five tokenized market leaders without manually building and maintaining
 each allocation.
 
-**Transparent by design**  
+**Transparent by design**
+
 ERC-4626 accounting and on-chain holdings make the vault's state independently
 inspectable.
 
-**Multiple exit options**  
+**Multiple exit options**
+
 Use available USDG liquidity, keeper-assisted liquidity restoration, or a
 proportional in-kind redemption.
 
