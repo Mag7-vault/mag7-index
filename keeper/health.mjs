@@ -3,6 +3,7 @@ import "dotenv/config";
 import { ethers } from "ethers";
 import { CHAIN_ID, TOKENS } from "voxelithic-interfaces";
 import { getApiHealth } from "./voxelithic.mjs";
+import { sendAlert } from "./notify.mjs";
 
 const VAULT_ABI = ["function asset() view returns(address)", "function oracle() view returns(address)", "function paused() view returns(bool)", "function basketLength() view returns(uint256)", "function basketTokens(uint256) view returns(address)", "function MIN_IDLE_USDG_BPS() view returns(uint16)", "function totalAssets() view returns(uint256)"];
 const ORACLE_ABI = ["function prices(address) view returns(uint256 priceUsdg,uint64 updatedAt)", "function maxStaleness() view returns(uint256)"];
@@ -34,7 +35,14 @@ async function main() {
   const bufferHealthy = totalAssets === null || idle * 10_000n >= totalAssets * BigInt(bufferBps);
   const report = { ok: !stale && bufferHealthy, chainId: Number(network.chainId), blockNumber: block.number, apiStatus: api.status ?? "ok", vault: vaultAddress, paused, idleUsdg: ethers.formatUnits(idle, 6), totalAssetsUsdg: totalAssets === null ? null : ethers.formatUnits(totalAssets, 6), bufferHealthy, stalePrices: stale, prices };
   console.log(JSON.stringify(report, null, 2));
-  if (!report.ok) process.exitCode = 2;
+  if (!report.ok) {
+    process.exitCode = 2;
+    await sendAlert("error", "Keeper health check FAILED", { vault: vaultAddress, stalePrices: stale, bufferHealthy, paused, idleUsdg: report.idleUsdg });
+  }
 }
 
-main().catch((error) => { console.error(JSON.stringify({ ok: false, error: error.message ?? String(error) })); process.exitCode = 1; });
+main().catch(async (error) => {
+  console.error(JSON.stringify({ ok: false, error: error.message ?? String(error) }));
+  process.exitCode = 1;
+  await sendAlert("error", "Keeper health check ERROR", { reason: error.message ?? String(error) });
+});

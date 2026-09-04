@@ -3,11 +3,13 @@ import "dotenv/config";
 import { ethers } from "ethers";
 import { CHAIN_ID, ROUTER, TOKENS } from "voxelithic-interfaces";
 import { getQuote, toV3Hops } from "./voxelithic.mjs";
+import { getSigner } from "./signer.mjs";
+import { sendAlert } from "./notify.mjs";
 
 const VAULT_ABI = [
   "function asset() view returns (address)", "function router() view returns (address)",
   "function basketLength() view returns (uint256)", "function basketTokens(uint256) view returns (address)",
-  "function targetWeightBps(address) view returns (uint16)", "function MIN_IDLE_USDG_BPS() view returns (uint16)",
+  "function targetWeight(address) view returns (uint16)", "function MIN_IDLE_USDG_BPS() view returns (uint16)",
   "function rebalance((address tokenIn,address tokenOut,uint256 amountIn,uint256 minOut,uint256 deadline,(uint8 kind,address pool,bool zeroForOne,uint24 feePpm)[] hops)[] legs)",
   "function restoreLiquidity((address tokenIn,address tokenOut,uint256 amountIn,uint256 minOut,uint256 deadline,(uint8 kind,address pool,bool zeroForOne,uint24 feePpm)[] hops)[] legs)",
 ];
@@ -21,7 +23,10 @@ async function main() {
   const rpcUrl = process.env.ROBINHOOD_MAINNET_RPC;
   const vaultAddress = process.env.INDEX_VAULT_ADDRESS;
   if (!rpcUrl || !vaultAddress) throw new Error("Set ROBINHOOD_MAINNET_RPC and INDEX_VAULT_ADDRESS");
-  if (execute && !process.env.REBALANCE_KEEPER_PRIVATE_KEY) throw new Error("--execute requires REBALANCE_KEEPER_PRIVATE_KEY");
+  const rawSigner = (process.env.KEEPER_SIGNER_KIND ?? "raw").toLowerCase() === "raw";
+  if (execute && rawSigner && !process.env.REBALANCE_KEEPER_PRIVATE_KEY) {
+    throw new Error("--execute requires REBALANCE_KEEPER_PRIVATE_KEY (or configure KEEPER_SIGNER_KIND)");
+  }
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const network = await provider.getNetwork();
   if (network.chainId !== BigInt(CHAIN_ID)) throw new Error(`Refusing chain ${network.chainId}; expected ${CHAIN_ID}`);
@@ -38,7 +43,7 @@ async function main() {
     const symbol = SYMBOL_BY_ADDRESS.get(address.toLowerCase());
     if (!symbol) throw new Error(`Unknown basket token ${address}`);
     const token = new ethers.Contract(address, ERC20_ABI, provider);
-    const [balance, decimals, weight] = await Promise.all([token.balanceOf(vaultAddress), token.decimals(), vault.targetWeightBps(address)]);
+    const [balance, decimals, weight] = await Promise.all([token.balanceOf(vaultAddress), token.decimals(), vault.targetWeight(address)]);
     let value = 0n;
     if (balance > 0n) {
       const result = await getQuote(symbol, "USDG", decimalFromRaw(balance, decimals), { maxPriceImpactBps: 100 });
@@ -94,13 +99,26 @@ async function main() {
   console.log(JSON.stringify({ chainId: CHAIN_ID, vault: vaultAddress, mode: restore ? "restoreLiquidity" : "rebalance", estimatedNavUsdg: decimalFromRaw(estimatedNav, 6), idleUsdg: decimalFromRaw(idle, 6), targetIdleUsdg: decimalFromRaw(targetIdle, 6), legs: legs.map((leg) => ({ ...leg, amountIn: leg.amountIn.toString(), minOut: leg.minOut.toString() })) }, null, 2));
   if (!execute) return console.log("Dry run only. Re-run with --execute after reviewing every leg.");
   if (legs.length === 0) return console.log("No trades required.");
-  const connectedVault = vault.connect(new ethers.Wallet(process.env.REBALANCE_KEEPER_PRIVATE_KEY, provider));
-  if (restore) await connectedVault.restoreLiquidity.staticCall(legs);
-  else await connectedVault.rebalance.staticCall(legs);
-  const tx = restore ? await connectedVault.restoreLiquidity(legs) : await connectedVault.rebalance(legs);
-  console.log(`${restore ? "restoreLiquidity" : "rebalance"} tx: ${tx.hash}`);
-  await tx.wait();
-  console.log("confirmed");
+  const mode = restore ? "restoreLiquidity" : "rebalance";
+  const signer = await getSigner(provider, "rebalance");
+  const connectedVault = vault.connect(signer);
+  try {
+    if (restore) await connectedVault.restoreLiquidity.staticCall(legs);
+    else await connectedVault.rebalance.staticCall(legs);
+    const tx = restore ? await connectedVault.restoreLiquidity(legs) : await connectedVault.rebalance(legs);
+    console.log(`${mode} tx: ${tx.hash}`);
+    await tx.wait();
+    console.log("confirmed");
+    await sendAlert("info", `${mode} confirmed`, {
+      vault: vaultAddress,
+      legs: legs.length,
+      txHash: tx.hash,
+      navUsdg: decimalFromRaw(estimatedNav, 6),
+    });
+  } catch (error) {
+    await sendAlert("error", `${mode} failed`, { vault: vaultAddress, reason: error.message ?? String(error) });
+    throw error;
+  }
 }
 
 main().catch((error) => { console.error(error.message ?? error); process.exitCode = 1; });

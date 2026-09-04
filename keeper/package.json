@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "post-prices": "node post-prices.mjs",
+    "post-market-caps": "node post-market-caps.mjs",
     "rebalance": "node rebalance.mjs",
     "health": "node health.mjs",
     "test": "node --test"

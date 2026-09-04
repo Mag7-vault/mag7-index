@@ -60,20 +60,32 @@ equity oracles exist on it.
 
 ```
 src/
-  IndexVault.sol       ERC-4626 vault: deposit/redeem, keeper-gated rebalance
-  PriceOracle.sol       keeper-posted prices, staleness-checked reads
+  IndexVault.sol       ERC-4626 vault: deposit/redeem, STATIC + MARKET_CAP
+                       weighting, keeper + permissionless rebalance, guardian pause
+  PriceOracle.sol       keeper-posted prices + market caps, staleness-checked reads
   interfaces/           IVoxRouter, IVoxQuoter — match live ABIs
   lib/Constants.sol     real addresses (router/quoter/tokens)
 test/
-  IndexVault.t.sol       core accounting + safety invariants
-  mocks/                 MockERC20, MockVoxRouter (no live-chain dependency)
+  IndexVault.t.sol            v1 accounting + safety invariants (STATIC default)
+  IndexVaultV2.t.sol          governance, market-cap, permissionless coverage
+  IndexVault.invariant.t.sol  handler-based invariants
+  RobinhoodFork.t.sol         live mainnet metadata check (env-gated)
+  mocks/                      MockERC20, MockVoxRouter (no live-chain dependency)
 script/
-  Deploy.s.sol           deploys oracle + vault, sets initial basket
+  Deploy.s.sol               deploys oracle + vault + timelock, sets basket + guardian
+  DeployTestnetDemo.s.sol    synthetic demo stack for testnet/local mechanics
 keeper/
   voxelithic.mjs         validated live API adapter and v3 route conversion
   post-prices.mjs        quote basket -> post to PriceOracle
+  post-market-caps.mjs   fetch caps (pluggable source + fallback) -> PriceOracle
   rebalance.mjs          dry-run-first allocation/liquidity route builder
   health.mjs             machine-readable RPC/API/oracle/buffer health check
+  notify.mjs             non-fatal Slack/Discord alerting
+  signer.mjs             raw-key or pluggable KMS signer
+docs/
+  audit/                 auditor package (scope, threat model, invariants, tests)
+  runbook-testnet.md     funded testnet demo runbook
+  runbook-canary.md      mainnet canary runbook (approval-gated)
 ```
 
 ## Setup
@@ -107,6 +119,11 @@ forge script script/Deploy.s.sol \
 Prints the `PriceOracle` and `IndexVault` addresses — put the oracle
 address into `keeper/.env` as `PRICE_ORACLE_ADDRESS`.
 
+For a real mainnet launch, don't run this bare command — follow
+[docs/runbook-canary.md](docs/runbook-canary.md), which sets `SAFE_ADDRESS` so the
+deploy wires the timelock + guardian and hands ownership over behind approval
+gates.
+
 ## Live route status
 
 Pool discovery and route construction now use Voxelithic's live HTTP API.
@@ -132,18 +149,54 @@ forge script script/DeployTestnetDemo.s.sol:DeployTestnetDemo \
 This does not count as a Voxelithic integration test. The fork test does verify
 the canonical mainnet contract code and metadata without moving funds.
 
-## Open items before real-money launch
+## Launch-hardening status
 
-1. Optional: add `VoxRouterV4` execution to expand beyond v3-only venues
-   (would re-enable META and unlock names like TSM). The equal-weight five
-   already reaches full allocation on v3 alone, so this is growth, not a blocker.
-2. Obtain an independent smart-contract/economic audit and remediate findings.
-3. Move owner powers to a Safe/timelock and run keeper keys from a managed
-   signer with alerting; see `keeper/README.md`.
-4. Complete a funded official-testnet demo, then a tiny mainnet canary after
-   explicit approval. Testnet currently validates mechanics, not Voxel routes.
-5. Static weighting remains intentional v1 scope; market-cap weights and
-   permissionless triggers are v2 work.
+This build folds the former **v2** scope (market-cap weighting + permissionless
+triggers) and the governance/keeper hardening into the current codebase, so they
+are audited together rather than bolted on afterward. Everything marked
+**shipped** below is code-complete and tested here — but still **unaudited**, and
+it ships **dormant** (STATIC equal-weight five, permissionless disabled,
+MARKET_CAP off) until enabled through the timelock after real deposits are live.
+
+**Shipped in code (this repo, tested):**
+
+- **Governance** — both contracts are `Ownable2Step`; `script/Deploy.s.sol` wires
+  an OZ `TimelockController` (48 h) whose sole proposer/executor is a Safe
+  multisig, plus an instant guardian `pause()` (guardian = Safe; `unpause` and
+  every setter stay behind the timelock). See
+  [docs/audit/README.md](docs/audit/README.md) §3.
+- **Managed keeper signer + alerting** — pluggable signer (`KEEPER_SIGNER_KIND`,
+  raw key or a KMS module) and non-fatal webhook alerts wired into the keeper's
+  health, price, rebalance, and market-cap jobs. See
+  [keeper/README.md](keeper/README.md).
+- **Market-cap weighting** — opt-in `MARKET_CAP` mode: oracle-fed caps → a
+  single-name cap (30%) with pro-rata redistribution, pure integer math. Default
+  stays STATIC, so existing behavior is unchanged.
+- **Permissionless triggers** — `rebalancePublic`, disabled by default and bounded
+  entirely on-chain (due-gate, direction, no-overshoot, an oracle-implied `minOut`
+  floor, a notional cap, and the 20% buffer). See
+  [docs/audit/README.md](docs/audit/README.md) §5.
+- **Audit package** — scope, threat model, invariants, and an invariant→test map
+  under [docs/audit/](docs/audit/), plus handler-based invariant tests and full
+  unit coverage of the new surface. The internal audit-prep review's findings are
+  remediated.
+
+**Remains before real money (your action, approval-gated — runbooks provided):**
+
+1. **Independent audit** — engage an external firm against this commit and
+   remediate their findings. `docs/audit/` is prepared for exactly that; it is a
+   package *for* an audit, not itself one.
+2. **Funded testnet demo** — follow
+   [docs/runbook-testnet.md](docs/runbook-testnet.md), including its mainnet-fork
+   rehearsal (the keeper scripts need live Voxelithic and can't run on testnet
+   `46630`).
+3. **Mainnet canary** — follow [docs/runbook-canary.md](docs/runbook-canary.md):
+   create the Safe, hand ownership to the timelock, deploy at a tiny cap behind
+   explicit go/no-go gates, soak, then stage the cap up. I do not create the Safe,
+   hold keys, or broadcast — every gate is yours.
+4. **Optional — v4 execution** — add `VoxRouterV4` routing to re-enable META and
+   unlock names like TSM. The equal-weight five already reaches full allocation on
+   v3 alone, so this is growth, not a blocker.
 
 ## Demo script (for the client pitch)
 
