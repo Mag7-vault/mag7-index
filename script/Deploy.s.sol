@@ -9,6 +9,12 @@ import {IndexVault} from "../src/IndexVault.sol";
 import {IVoxRouter} from "../src/interfaces/IVoxRouter.sol";
 import {RobinhoodChain, Tokens} from "../src/lib/Constants.sol";
 
+interface ISafeLike {
+    function masterCopy() external view returns (address);
+    function getOwners() external view returns (address[] memory);
+    function getThreshold() external view returns (uint256);
+}
+
 /// @dev NOTE ON BASKET COMPOSITION
 /// Two "Magnificent Seven" names cannot go in a v3-only vault today:
 ///   - MSFT has no Robinhood Token on this chain (not in Voxelithic's list).
@@ -30,6 +36,19 @@ import {RobinhoodChain, Tokens} from "../src/lib/Constants.sol";
 /// (STATIC weights, zero permissionless notional) and are enabled later by the
 /// owner — i.e. through the timelock — once their feeds/policy are in place.
 contract Deploy is Script {
+    uint256 internal constant MAINNET_CHAIN_ID = 4663;
+    uint256 internal constant MIN_MAINNET_TIMELOCK_DELAY = 48 hours;
+
+    error MainnetSafeRequired();
+    error MainnetSafeMustBeContract(address safe);
+    error MainnetSafeCodehashMismatch(bytes32 actual, bytes32 expected);
+    error MainnetSafeSingletonMismatch(address actual, address expected);
+    error MainnetSafeConfigurationInvalid();
+    error MainnetTimelockTooShort(uint256 provided, uint256 minimum);
+    error MainnetCapMustStartZero(uint256 cap);
+    error MainnetKeeperRequired();
+    error MainnetRoleCollision(address account);
+
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
@@ -37,10 +56,21 @@ contract Deploy is Script {
         address rebalanceKeeper = vm.envOr("REBALANCE_KEEPER_ADDRESS", deployer);
         uint256 initialCap = vm.envOr("INITIAL_DEPOSIT_CAP", uint256(10_000e6)); // USDG is 6dec
         address safe = vm.envOr("SAFE_ADDRESS", address(0));
+        address expectedSafeSingleton = vm.envOr("EXPECTED_SAFE_SINGLETON", address(0));
+        bytes32 expectedSafeCodehash = vm.envOr("EXPECTED_SAFE_CODEHASH", bytes32(0));
         uint256 minDelay = vm.envOr("TIMELOCK_MIN_DELAY", uint256(48 hours));
 
-        // Real money on mainnet must never sit behind a bare EOA owner.
-        require(block.chainid != 4663 || safe != address(0), "SAFE_ADDRESS required on mainnet");
+        validateMainnetConfig(
+            block.chainid,
+            deployer,
+            safe,
+            expectedSafeSingleton,
+            expectedSafeCodehash,
+            oracleKeeper,
+            rebalanceKeeper,
+            initialCap,
+            minDelay
+        );
 
         vm.startBroadcast(deployerKey);
 
@@ -97,6 +127,74 @@ contract Deploy is Script {
             console2.log("Ownership pending -> timelock. Safe must schedule+execute acceptOwnership() on BOTH.");
         } else {
             console2.log("No SAFE_ADDRESS set: deployer retains ownership (local/testnet only).");
+        }
+    }
+
+    /// @notice Fail closed on mainnet when launch/governance role separation is
+    ///         not explicit. Local and testnet demos keep their convenient
+    ///         deployer-owned defaults.
+    function validateMainnetConfig(
+        uint256 chainId,
+        address deployer,
+        address safe,
+        address expectedSafeSingleton,
+        bytes32 expectedSafeCodehash,
+        address oracleKeeper,
+        address rebalanceKeeper,
+        uint256 initialCap,
+        uint256 minDelay
+    ) public view {
+        if (chainId != MAINNET_CHAIN_ID) return;
+        if (safe == address(0)) revert MainnetSafeRequired();
+        if (safe.code.length == 0) revert MainnetSafeMustBeContract(safe);
+        if (expectedSafeCodehash == bytes32(0) || safe.codehash != expectedSafeCodehash) {
+            revert MainnetSafeCodehashMismatch(safe.codehash, expectedSafeCodehash);
+        }
+        if (expectedSafeSingleton == address(0)) revert MainnetSafeConfigurationInvalid();
+
+        try ISafeLike(safe).masterCopy() returns (address singleton) {
+            if (singleton != expectedSafeSingleton) {
+                revert MainnetSafeSingletonMismatch(singleton, expectedSafeSingleton);
+            }
+        } catch {
+            revert MainnetSafeConfigurationInvalid();
+        }
+        if (minDelay < MIN_MAINNET_TIMELOCK_DELAY) {
+            revert MainnetTimelockTooShort(minDelay, MIN_MAINNET_TIMELOCK_DELAY);
+        }
+        if (initialCap != 0) revert MainnetCapMustStartZero(initialCap);
+        if (oracleKeeper == address(0) || rebalanceKeeper == address(0)) revert MainnetKeeperRequired();
+
+        if (safe == deployer || oracleKeeper == deployer || rebalanceKeeper == deployer) {
+            revert MainnetRoleCollision(deployer);
+        }
+        if (oracleKeeper == rebalanceKeeper) revert MainnetRoleCollision(oracleKeeper);
+        if (oracleKeeper == safe || rebalanceKeeper == safe) revert MainnetRoleCollision(safe);
+
+        address[] memory owners;
+        uint256 threshold;
+        try ISafeLike(safe).getOwners() returns (address[] memory safeOwners) {
+            owners = safeOwners;
+        } catch {
+            revert MainnetSafeConfigurationInvalid();
+        }
+        try ISafeLike(safe).getThreshold() returns (uint256 safeThreshold) {
+            threshold = safeThreshold;
+        } catch {
+            revert MainnetSafeConfigurationInvalid();
+        }
+        if (owners.length < 2 || threshold < 2 || threshold > owners.length) {
+            revert MainnetSafeConfigurationInvalid();
+        }
+        for (uint256 i = 0; i < owners.length; i++) {
+            address safeOwner = owners[i];
+            if (safeOwner == address(0)) revert MainnetSafeConfigurationInvalid();
+            if (safeOwner == deployer || safeOwner == oracleKeeper || safeOwner == rebalanceKeeper) {
+                revert MainnetRoleCollision(safeOwner);
+            }
+            for (uint256 j = 0; j < i; j++) {
+                if (safeOwner == owners[j]) revert MainnetSafeConfigurationInvalid();
+            }
         }
     }
 }

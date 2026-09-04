@@ -122,7 +122,9 @@ address into `keeper/.env` as `PRICE_ORACLE_ADDRESS`.
 For a real mainnet launch, don't run this bare command — follow
 [docs/runbook-canary.md](docs/runbook-canary.md), which sets `SAFE_ADDRESS` so the
 deploy wires the timelock + guardian and hands ownership over behind approval
-gates.
+gates. Mainnet validation also requires independently approved
+`EXPECTED_SAFE_CODEHASH` and `EXPECTED_SAFE_SINGLETON` values and checks the
+Safe's owners, threshold, and separation from deployer/keeper roles.
 
 ## Live route status
 
@@ -191,8 +193,8 @@ MARKET_CAP off) until enabled through the timelock after real deposits are live.
    rehearsal (the keeper scripts need live Voxelithic and can't run on testnet
    `46630`).
 3. **Mainnet canary** — follow [docs/runbook-canary.md](docs/runbook-canary.md):
-   create the Safe, hand ownership to the timelock, deploy at a tiny cap behind
-   explicit go/no-go gates, soak, then stage the cap up. I do not create the Safe,
+   create the Safe, deploy closed at a zero cap, hand ownership to the timelock,
+   then open a tiny cap behind explicit go/no-go gates, soak, and stage it up. I do not create the Safe,
    hold keys, or broadcast — every gate is yours.
 4. **Optional — v4 execution** — add `VoxRouterV4` routing to re-enable META and
    unlock names like TSM. The equal-weight five already reaches full allocation on
@@ -200,8 +202,8 @@ MARKET_CAP off) until enabled through the timelock after real deposits are live.
 
 ## Demo script (for the client pitch)
 
-1. Deploy with a small cap (the `.env.example` default mirrors DOSS's
-   $10k launch-week cap)
+1. Deploy closed with `INITIAL_DEPOSIT_CAP=0`, complete the Safe/timelock
+   handover, then open a small cap through Gate C
 2. `deposit()` USDG, show shares minted 1:1 at NAV
 3. Run `keeper/post-prices.mjs` once, show real prices land in `PriceOracle`
 4. Call `rebalance()` with one real hop, show the basket token land in the

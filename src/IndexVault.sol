@@ -137,6 +137,8 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
     error MinOutBelowOracleFloor(address token, uint256 minOut, uint256 floor);
     error NotionalCapExceeded(uint256 traded, uint256 cap);
     error PermissionlessDisabled();
+    error EmptyRebalance();
+    error ZeroRebalanceAmount();
 
     modifier onlyKeeper() {
         if (!isKeeper[msg.sender] && msg.sender != owner()) revert NotKeeper();
@@ -385,9 +387,7 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
             if (leg.tokenOut != asset() && !inBasket[leg.tokenOut]) {
                 revert InvalidRebalanceToken(leg.tokenOut);
             }
-            IERC20(leg.tokenIn).forceApprove(address(router), leg.amountIn);
-            uint256 out =
-                router.swapExactIn(leg.tokenIn, leg.tokenOut, leg.amountIn, leg.minOut, leg.deadline, leg.hops);
+            uint256 out = _swapExactIn(leg);
             emit Rebalanced(leg.tokenIn, leg.tokenOut, leg.amountIn, out);
         }
 
@@ -411,8 +411,7 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
             }
 
             uint256 usdgBefore = IERC20(asset()).balanceOf(address(this));
-            IERC20(leg.tokenIn).forceApprove(address(router), leg.amountIn);
-            router.swapExactIn(leg.tokenIn, leg.tokenOut, leg.amountIn, leg.minOut, leg.deadline, leg.hops);
+            _swapExactIn(leg);
             uint256 usdgAfter = IERC20(asset()).balanceOf(address(this));
             uint256 received = usdgAfter - usdgBefore;
             if (received < leg.minOut) revert InsufficientSwapOutput(received, leg.minOut);
@@ -439,6 +438,7 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
     ///         by this policy for legitimate larger moves.
     function rebalancePublic(RebalanceLeg[] calldata legs) external whenNotPaused nonReentrant {
         if (maxPermissionlessNotional == 0) revert PermissionlessDisabled();
+        if (legs.length == 0) revert EmptyRebalance();
 
         // Establish the oracle anchor: totalAssets() reverts on any stale/missing
         // price for a held token, so navBefore and every leg check below are
@@ -458,9 +458,7 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
             if (tradedNotional > maxPermissionlessNotional) {
                 revert NotionalCapExceeded(tradedNotional, maxPermissionlessNotional);
             }
-            IERC20(leg.tokenIn).forceApprove(address(router), leg.amountIn);
-            uint256 out =
-                router.swapExactIn(leg.tokenIn, leg.tokenOut, leg.amountIn, leg.minOut, leg.deadline, leg.hops);
+            uint256 out = _swapExactIn(leg);
             emit Rebalanced(leg.tokenIn, leg.tokenOut, leg.amountIn, out);
             emit PermissionlessRebalanced(msg.sender, leg.tokenIn, leg.tokenOut, leg.amountIn, out);
         }
@@ -474,6 +472,16 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
         lastRebalanceAt = block.timestamp;
     }
 
+    /// @dev Approve only for the duration of one router call. Clearing any
+    ///      unspent remainder prevents a later router compromise from pulling
+    ///      vault assets without entering a pausable vault function.
+    function _swapExactIn(RebalanceLeg calldata leg) internal returns (uint256 out) {
+        IERC20 tokenIn = IERC20(leg.tokenIn);
+        tokenIn.forceApprove(address(router), leg.amountIn);
+        out = router.swapExactIn(leg.tokenIn, leg.tokenOut, leg.amountIn, leg.minOut, leg.deadline, leg.hops);
+        tokenIn.forceApprove(address(router), 0);
+    }
+
     /// @dev Validates one permissionless leg against live holdings and the oracle,
     ///      returning the USDG notional it moves. Reads live balanceOf so that a
     ///      prior leg in the same call cannot be overshot by a later one.
@@ -482,6 +490,7 @@ contract IndexVault is ERC4626, Ownable2Step, Pausable, ReentrancyGuard {
         view
         returns (uint256 notional)
     {
+        if (leg.amountIn == 0) revert ZeroRebalanceAmount();
         bool buy = leg.tokenIn == asset(); // USDG -> token
         bool sell = leg.tokenOut == asset(); // token -> USDG
         if (buy == sell) revert InvalidRebalanceToken(buy ? leg.tokenIn : leg.tokenOut);

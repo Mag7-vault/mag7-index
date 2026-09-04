@@ -329,6 +329,30 @@ contract IndexVaultV2Test is Test {
         vault.rebalancePublic(_buyLeg(address(nvda), 400e6, 396e18));
     }
 
+    function test_permissionlessRevertsOnEmptyLegsWithoutAdvancingTimestamp() public {
+        _enablePolicy(1_000e6);
+        IndexVault.RebalanceLeg[] memory legs = new IndexVault.RebalanceLeg[](0);
+
+        vm.prank(mallory);
+        vm.expectRevert(IndexVault.EmptyRebalance.selector);
+        vault.rebalancePublic(legs);
+
+        assertEq(vault.lastRebalanceAt(), 0);
+    }
+
+    function test_permissionlessRevertsOnZeroAmountWithoutAdvancingTimestamp() public {
+        vm.prank(alice);
+        vault.deposit(1_000e6, alice);
+        _postPrice(address(nvda), PRICE);
+        _enablePolicy(1_000e6);
+
+        vm.prank(mallory);
+        vm.expectRevert(IndexVault.ZeroRebalanceAmount.selector);
+        vault.rebalancePublic(_buyLeg(address(nvda), 0, 0));
+
+        assertEq(vault.lastRebalanceAt(), 0);
+    }
+
     function test_permissionlessRevertsWhenNotDue() public {
         vm.prank(alice);
         vault.deposit(1_000e6, alice);
@@ -429,6 +453,19 @@ contract IndexVaultV2Test is Test {
         vm.prank(mallory);
         vault.rebalancePublic(_buyLeg(address(nvda), 400e6, 396e18));
         assertEq(vault.totalAssets(), navBefore, "no NAV change when swapping at oracle price");
+    }
+
+    function test_routerAllowanceClearedWhenRouterSpendsLessThanApproved() public {
+        vm.prank(alice);
+        vault.deposit(1_000e6, alice);
+        _postPrice(address(nvda), PRICE);
+        router.setRate(address(usdg), address(nvda), BUY_RATE);
+        router.setSpendBps(5_000);
+
+        vm.prank(keeper);
+        vault.rebalance(_buyLeg(address(nvda), 400e6, 396e18));
+
+        assertEq(usdg.allowance(address(vault), address(router)), 0);
     }
 
     function test_permissionlessBoundedLossAtFloor() public {

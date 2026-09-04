@@ -35,6 +35,11 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
   Signers on hardware wallets. This Safe becomes both the **timelock's sole
   proposer/executor** and the **instant-pause guardian**.
 - Record `SAFE_ADDRESS`. It must **not** equal any keeper or deployer address.
+- Independently verify the Safe proxy runtime and singleton against an approved
+  Safe deployment. Record that proxy runtime hash as `EXPECTED_SAFE_CODEHASH`
+  and its singleton as `EXPECTED_SAFE_SINGLETON`; do not derive approval solely
+  from the candidate Safe address. The deploy script also verifies the on-chain
+  owner list, a threshold of at least 2, and role separation.
 
 ## 2. Keys and env
 
@@ -46,7 +51,8 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
       [keeper/signers/aws-kms.example.mjs](../keeper/signers/aws-kms.example.mjs));
       the raw keys then stay unused. Keys never in a committed `.env` or CI log.
 - [ ] `.env` set: `ROBINHOOD_MAINNET_RPC`, `DEPLOYER_PRIVATE_KEY`, `SAFE_ADDRESS`,
-      `TIMELOCK_MIN_DELAY=172800` (48h), `INITIAL_DEPOSIT_CAP` **at or near 0** for
+      independently verified `EXPECTED_SAFE_SINGLETON` and `EXPECTED_SAFE_CODEHASH`,
+      `TIMELOCK_MIN_DELAY=172800` (48h), `INITIAL_DEPOSIT_CAP=0` for
       the very first open (you raise it at Gate C/D), `ORACLE_KEEPER_ADDRESS`,
       `REBALANCE_KEEPER_ADDRESS`, `ALERT_WEBHOOK_URL`.
 - [ ] `forge build && forge test -vvv` green on the exact commit you will deploy.
@@ -54,7 +60,7 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
 
 ### 🚦 GATE A — operator go to broadcast the deploy
 
-Confirm: correct chain, correct Safe, cap starts tiny, keeper addresses correct,
+Confirm: correct chain, correct Safe, cap starts at zero, keeper addresses correct,
 commit hash matches the audited one. On your **go**:
 
 ## 3. Deploy
@@ -207,15 +213,21 @@ Ordered by reversibility — start at the top:
    idle USDG) and `redeemInKind` (always) keep working — pausing never traps
    funds. ⚠️ Unpausing is `onlyOwner` = a 48h timelock proposal, so treat a pause
    as a ≥48h commitment.
-2. **Restore liquidity (keeper):** if idle USDG is short for pending exits, run
-   `npm run rebalance -- --restore-liquidity --execute` to sell basket → USDG.
-   This works even with stale/absent prices and only ever increases USDG.
-3. **In-kind exit (any holder, no keeper, no oracle):** if the keeper is down or
+2. **In-kind exit (any holder, no keeper, no oracle):** if the keeper is down or
    prices are unusable, holders call `redeemInKind` for pro-rata USDG + basket
    tokens. This is the ultimate escape hatch and needs nothing but the vault.
-4. **Rotate a compromised keeper:** `setKeeper(bad, false)` (+ new keeper) via
-   timelock; the guardian can pause meanwhile. Keeper keys are non-owner and
-   revocable.
+3. **Revoke any compromised keeper before unpausing:** schedule a timelock batch
+   that calls `setKeeper(compromised, false)` before `unpause()`, then add the
+   replacement keeper separately or later in that batch. Never unpause while a
+   known-compromised keeper remains authorized.
+4. **Restore liquidity only after clearing the incident cause:**
+   `restoreLiquidity` deliberately stops while paused so a compromised keeper or
+   router cannot make new vault calls. Router allowances are cleared after every
+   successful swap, but if router compromise is suspected, verify allowances are
+   zero and prefer an in-kind wind-down rather than unpausing. If standard USDG exits must be restored,
+   first rule out those causes, then schedule the timelocked unpause and run
+   `npm run rebalance -- --restore-liquidity --execute`. Until then, use the
+   in-kind exit above; do not expect restore to work during pause.
 5. **Governance change / wind-down:** any config or ownership move is a timelock
    proposal — publicly visible for 48h before it can execute.
 

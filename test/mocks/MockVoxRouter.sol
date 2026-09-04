@@ -11,9 +11,15 @@ import {MockERC20} from "./MockERC20.sol";
 contract MockVoxRouter is IVoxRouter {
     // rate: how many `tokenOut` units (18dec) per 1e18 `tokenIn` units, scaled 1e18
     mapping(address => mapping(address => uint256)) public rate;
+    uint256 public spendBps = 10_000;
 
     function setRate(address tokenIn, address tokenOut, uint256 rate1e18) external {
         rate[tokenIn][tokenOut] = rate1e18;
+    }
+
+    function setSpendBps(uint256 spendBps_) external {
+        require(spendBps_ <= 10_000, "bad spend bps");
+        spendBps = spendBps_;
     }
 
     function swapExactIn(
@@ -28,7 +34,7 @@ contract MockVoxRouter is IVoxRouter {
         uint256 r = rate[tokenIn][tokenOut];
         require(r != 0, "no rate set");
 
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn * spendBps / 10_000);
         outToUser = (amountIn * r) / 1e18;
         require(outToUser >= minOut, "slippage");
         MockERC20(tokenOut).mint(msg.sender, outToUser);
