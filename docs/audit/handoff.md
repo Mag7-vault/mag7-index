@@ -26,9 +26,13 @@ gate before a funded testnet demo and a tiny mainnet canary.
 | **Branch** | `feat/launch-hardening-v2` |
 | **Baseline** | this branch's changes are the delta from `main` @ `b45271e` (§5) |
 
-All findings and the final report should reference commit `482c1bc`. If we push
-fixes, we will give you the new remediation commit explicitly; please do not
-audit a moving `HEAD`.
+Check out the tip of `feat/launch-hardening-v2` — it contains the in-scope code
+**and** this audit package. The in-scope Solidity (`src/`, `script/`) is
+identical to commit `482c1bc` and has not changed since; the later commits only
+add these audit docs. Verify with `git diff 482c1bc HEAD -- src script` (no
+output). Reference `482c1bc` for code locations in findings. If we push fixes we
+will give you the remediation commit explicitly — otherwise please do not audit a
+moving `HEAD`.
 
 **Access:** the repo is private. We will either add the audit team as
 read-collaborators or send a `git archive`/bundle of the pinned commit — tell us
