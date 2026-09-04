@@ -28,10 +28,12 @@ https://voxelithic.xyz on 2026-09-03 — not guessed:
 - `src/interfaces/IVoxRouter.sol`, `IVoxQuoter.sol` — match the deployed ABIs
   exactly, including the custom errors
 
-**MSFT is not tradable on this chain.** It's not in Voxelithic's token list.
-The basket ships as an equal-weight six (NVDA, AAPL, TSLA, GOOGL, META,
-AMZN) instead of a strict Mag7. Swap in a 7th (AMD/PLTR/COIN/MU are all
-live) if the client wants a round number more than strict accuracy —
+**Two Mag7 names can't be held on a v3-only vault today.** MSFT isn't in
+Voxelithic's token list at all, and META (listed) only quotes on a v4 pool —
+IndexVault v1 executes v3 routes only. The basket therefore ships as an
+equal-weight five (NVDA, AAPL, TSLA, GOOGL, AMZN), each with a live v3 USDG
+pool. To grow it, add a name with a v3 venue — AMD, PLTR, MU, and NFLX are all
+live v3 (COIN has no USDG pool and TSM is v4-only as of 2026-09-04).
 `script/Deploy.s.sol` has a comment at the top marking where to edit this.
 
 ## Architecture
@@ -109,9 +111,10 @@ address into `keeper/.env` as `PRICE_ORACLE_ADDRESS`.
 
 Pool discovery and route construction now use Voxelithic's live HTTP API.
 `keeper/routes.snapshot.json` records the 2026-09-04 discovery result, while
-every executable keeper run fetches fresh routes and `minOut` values. NVDA,
-AAPL, TSLA, GOOGL, and AMZN resolved to v3 pools. META resolved only to a v4
-pool; the v1 keeper fails closed instead of submitting incompatible calldata.
+every executable keeper run fetches fresh routes and `minOut` values. All five
+basket names — NVDA, AAPL, TSLA, GOOGL, AMZN — resolved to v3 pools. META
+resolved only to a v4 pool, so it is excluded from the v1 basket; the keeper
+still fails closed on any v4 route rather than submitting incompatible calldata.
 
 ## Testnet
 
@@ -119,7 +122,7 @@ Robinhood mainnet is chain `4663`; testnet is `46630`. The canonical tokens
 and Voxelithic contracts used here are published for mainnet, not testnet.
 `DeployTestnetDemo.s.sol` therefore deploys a prominently labeled demo-token
 and deterministic-router stack for mechanics testing only. It exercises a
-10 USDG deposit, six buys, and the 20% buffer with a 1,000 demo-USDG cap:
+10 USDG deposit, five buys, and the 20% buffer with a 1,000 demo-USDG cap:
 
 ```bash
 forge script script/DeployTestnetDemo.s.sol:DeployTestnetDemo \
@@ -131,8 +134,9 @@ the canonical mainnet contract code and metadata without moving funds.
 
 ## Open items before real-money launch
 
-1. Add `VoxRouterV4` execution or replace META with an asset that has a v3
-   venue; the current basket cannot reach its full target allocation.
+1. Optional: add `VoxRouterV4` execution to expand beyond v3-only venues
+   (would re-enable META and unlock names like TSM). The equal-weight five
+   already reaches full allocation on v3 alone, so this is growth, not a blocker.
 2. Obtain an independent smart-contract/economic audit and remediate findings.
 3. Move owner powers to a Safe/timelock and run keeper keys from a managed
    signer with alerting; see `keeper/README.md`.

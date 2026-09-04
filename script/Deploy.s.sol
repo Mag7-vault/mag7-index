@@ -9,12 +9,14 @@ import {IVoxRouter} from "../src/interfaces/IVoxRouter.sol";
 import {RobinhoodChain, Tokens} from "../src/lib/Constants.sol";
 
 /// @dev NOTE ON BASKET COMPOSITION
-/// MSFT has no Robinhood Token on this chain as of 2026-09-03 — it is not in
-/// Voxelithic's published token list. The other six "Magnificent Seven" names
-/// (NVDA, AAPL, TSLA, GOOGL, META, AMZN) all are. This deploy script ships an
-/// equal-weight six, not seven. Swap in AMD/PLTR/COIN/MU as a seventh if the
-/// client wants a round number more than strict Mag7 accuracy — just keep the
-/// weightsBps summing to 10_000.
+/// Two "Magnificent Seven" names cannot go in a v3-only vault today:
+///   - MSFT has no Robinhood Token on this chain (not in Voxelithic's list).
+///   - META is listed but only quotes on a Voxelithic v4 pool; IndexVault v1
+///     executes v3 routes only, so it cannot be reached (see keeper/voxelithic.mjs).
+/// This script therefore ships an equal-weight FIVE (NVDA, AAPL, TSLA, GOOGL,
+/// AMZN), each with a live v3 USDG pool. To grow the basket, add a name with a
+/// v3 venue — AMD/PLTR/MU/NFLX are all live v3 as of 2026-09-04 (COIN has no
+/// USDG pool and TSM is v4-only) — just keep weightsBps summing to 10_000.
 contract Deploy is Script {
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -32,21 +34,19 @@ contract Deploy is Script {
             new IndexVault(IERC20(Tokens.USDG), IVoxRouter(RobinhoodChain.VOX_ROUTER), oracle, deployer, initialCap);
         vault.setKeeper(rebalanceKeeper, true);
 
-        address[] memory basket = new address[](6);
+        address[] memory basket = new address[](5);
         basket[0] = Tokens.NVDA;
         basket[1] = Tokens.AAPL;
         basket[2] = Tokens.TSLA;
         basket[3] = Tokens.GOOGL;
-        basket[4] = Tokens.META;
-        basket[5] = Tokens.AMZN;
+        basket[4] = Tokens.AMZN;
 
-        uint16[] memory weights = new uint16[](6);
-        weights[0] = 1667;
-        weights[1] = 1667;
-        weights[2] = 1667;
-        weights[3] = 1667;
-        weights[4] = 1666;
-        weights[5] = 1666;
+        uint16[] memory weights = new uint16[](5);
+        weights[0] = 2000;
+        weights[1] = 2000;
+        weights[2] = 2000;
+        weights[3] = 2000;
+        weights[4] = 2000;
 
         vault.setBasket(basket, weights);
 

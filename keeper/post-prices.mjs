@@ -5,7 +5,7 @@ import { CHAIN_ID, TOKENS } from "voxelithic-interfaces";
 import { getQuote } from "./voxelithic.mjs";
 
 const ORACLE_ABI = ["function postPrices(address[] tokens,uint256[] priceUsdg18) external"];
-const DEFAULT_BASKET = ["NVDA", "AAPL", "TSLA", "GOOGL", "META", "AMZN"];
+const DEFAULT_BASKET = ["NVDA", "AAPL", "TSLA", "GOOGL", "AMZN"];
 
 async function main() {
   const rpcUrl = process.env.ROBINHOOD_MAINNET_RPC;

@@ -70,14 +70,14 @@ contract DeployTestnetDemo is Script {
         PriceOracle oracle = new PriceOracle(deployer);
         IndexVault vault = new IndexVault(IERC20(address(usdg)), IVoxRouter(address(router)), oracle, deployer, cap);
 
-        address[] memory basket = new address[](6);
-        string[6] memory symbols = ["dNVDA", "dAAPL", "dTSLA", "dGOOGL", "dMETA", "dAMZN"];
-        uint16[] memory weights = new uint16[](6);
-        uint256[] memory prices = new uint256[](6);
-        for (uint256 i = 0; i < 6; i++) {
+        address[] memory basket = new address[](5);
+        string[5] memory symbols = ["dNVDA", "dAAPL", "dTSLA", "dGOOGL", "dAMZN"];
+        uint16[] memory weights = new uint16[](5);
+        uint256[] memory prices = new uint256[](5);
+        for (uint256 i = 0; i < 5; i++) {
             TestnetDemoToken token = new TestnetDemoToken(symbols[i], symbols[i], 18);
             basket[i] = address(token);
-            weights[i] = i < 4 ? 1667 : 1666;
+            weights[i] = 2000;
             prices[i] = 1e6;
             token.mint(address(router), 1_000e18);
             router.setRate(address(usdg), address(token), 1e30);
@@ -90,10 +90,10 @@ contract DeployTestnetDemo is Script {
         usdg.approve(address(vault), 10e6);
         vault.deposit(10e6, deployer);
 
-        IndexVault.RebalanceLeg[] memory legs = new IndexVault.RebalanceLeg[](6);
+        IndexVault.RebalanceLeg[] memory legs = new IndexVault.RebalanceLeg[](5);
         IVoxRouter.Hop[] memory hops = new IVoxRouter.Hop[](0);
-        for (uint256 i = 0; i < 6; i++) {
-            uint256 amount = i < 2 ? 1_333_334 : 1_333_333;
+        for (uint256 i = 0; i < 5; i++) {
+            uint256 amount = 1_600_000;
             legs[i] = IndexVault.RebalanceLeg({
                 tokenIn: address(usdg),
                 tokenOut: basket[i],
