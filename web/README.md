@@ -20,8 +20,9 @@ demo balances. Production preview does not use this override.
 The agreed initial basket is NVDA, AAPL, GOOGL, QQQ, NFLX at 2000 bps each.
 Live holdings and weights still come from the configured contract.
 
-`public/deployment.json` is `null` by default: this deliberately selects the
-clearly labeled in-memory demo. Replace it with a reviewed public configuration:
+`public/deployment.json` now points at the zero-cap Robinhood Chain mainnet
+deployment. Set it to `null` to deliberately select the clearly labeled
+in-memory demo, or replace it with another reviewed public configuration:
 
 ```json
 {
@@ -36,7 +37,7 @@ clearly labeled in-memory demo. Replace it with a reviewed public configuration:
 }
 ```
 
-For mainnet set environment `mainnet`, chain ID `4663`, the verified vault
+For mainnet use environment `mainnet`, chain ID `4663`, the verified vault
 deployment block, and the reviewed chain/RPC/explorer/native-currency values.
 Testnet uses its own demo deployment; never use mainnet canonical token addresses
 as a substitute for a deployed testnet vault. Public configuration contains no

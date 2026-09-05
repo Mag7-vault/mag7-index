@@ -30,11 +30,18 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
 
 ---
 
-## 1. Create the Safe (you, in the Safe UI)
+## 1. Verify the production Safe (you, in the Safe UI)
 
-- Create a Safe multisig on chain `4663` with a real signer threshold (e.g. 3/5).
-  Signers on hardware wallets. This Safe becomes both the **timelock's sole
-  proposer/executor** and the **instant-pause guardian**.
+The production `2-of-3` Safe, its official v1.4.1 components, and a successful
+two-independent-signer rehearsal are recorded in
+[safe-mainnet-verification-2026-09-05.md](./safe-mainnet-verification-2026-09-05.md).
+That rehearsal completes the Safe creation/runtime/signing check only; it does
+not advance Gate A or replace the independent audit.
+
+- Confirm the recorded Safe on chain `4663` still has the expected three owners
+  and `2-of-3` threshold. Owners should use hardware wallets. This Safe becomes
+  both the timelock's **sole proposer/executor** and the **instant-pause
+  guardian**.
 - Record `SAFE_ADDRESS`. It must **not** equal any keeper or deployer address.
 - Independently verify the Safe proxy runtime and singleton against an approved
   Safe deployment. Record that proxy runtime hash as `EXPECTED_SAFE_CODEHASH`
@@ -60,6 +67,10 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
       Record the commit hash; the external audit must cover it.
 
 ### 🚦 GATE A — operator go to broadcast the deploy
+
+Completed on 2026-09-05 with deposits closed at cap zero. Addresses, confirmed
+transactions, configuration, and explicit operator waivers are recorded in
+[mainnet-deployment-2026-09-05.md](./mainnet-deployment-2026-09-05.md).
 
 Confirm: correct chain, correct Safe, cap starts at zero, keeper addresses correct,
 commit hash matches the externally audited one. On your **go**:
@@ -98,6 +109,13 @@ owns everything, so nothing is locked in yet.
 
 ## 4. Guardian-pause smoke test — do this BEFORE the handover
 
+**Completed on mainnet 2026-09-06.** The Safe pause transaction was
+`0x73e9bace87664ed8d8ca0a1bfee27743bfb6be5ffb46ed9ebe1d725f56bb9f5a`;
+the deployer unpause transaction was
+`0x445475aa5da739c2f3ec8c0f6c74d5cd8466432d3c8668ad724c4055b316bed2`.
+Final reads confirmed `paused() == false`, `depositCap() == 0`, and
+`maxDeposit(...) == 0`.
+
 > **Why now:** `pause()` is instant (guardian = Safe), but `unpause()` is
 > `onlyOwner`. **After** the handover, owner = timelock, so unpausing takes a
 > full 48h timelocked proposal. While the **deployer** is still owner, unpause is
@@ -117,6 +135,17 @@ and fix before handover** — after handover this becomes a 48h round-trip.
 ### 🚦 GATE B — operator go to hand ownership to the timelock
 
 ## 5. Ownership handover (Safe → timelock, via timelock)
+
+**Scheduled on mainnet 2026-09-06.** Safe transaction
+`0x25d9c080d75c788fe0cef49ff3dd05bd6a2513e4e790baf245170a1a32b04470`
+scheduled both operations. They become executable at **2026-09-08 00:24:57
+WAT** (`2026-09-07 23:24:57 UTC`). Do not recreate or reschedule them; execute
+the exact recorded operations after that timestamp.
+
+- Oracle operation ID:
+  `0x5a2d9c0afc48d9ca34ee60ea2a1ae6c9771fd55357ffd5a148c24c02300892d6`
+- Vault operation ID:
+  `0xf64b12f9d3b9af248f10de5ba6ab044e3f72cf14e1a1019c48f09e34ae1b4f26`
 
 Ownership only moves when the **timelock** (the pending owner) calls
 `acceptOwnership()`. The Safe drives that through the timelock: schedule, wait

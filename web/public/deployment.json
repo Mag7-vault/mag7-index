@@ -1,1 +1,14 @@
-null
+{
+  "environment": "mainnet",
+  "chainId": 4663,
+  "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+  "vaultAddress": "0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+  "deploymentBlock": 55387046,
+  "explorerUrl": "https://robinhoodchain.blockscout.com",
+  "chainName": "Robinhood Chain",
+  "nativeCurrency": {
+    "name": "Ether",
+    "symbol": "ETH",
+    "decimals": 18
+  }
+}

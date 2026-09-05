@@ -199,10 +199,12 @@ MARKET_CAP off) until enabled through the timelock after real deposits are live.
    [docs/runbook-testnet.md](docs/runbook-testnet.md), including its mainnet-fork
    rehearsal (the keeper scripts need live Voxelithic and can't run on testnet
    `46630`).
-3. **Mainnet canary** — follow [docs/runbook-canary.md](docs/runbook-canary.md):
-   create the Safe, deploy closed at a zero cap, hand ownership to the timelock,
-   then open a tiny cap behind explicit go/no-go gates, soak, and stage it up. I do not create the Safe,
-   hold keys, or broadcast — every gate is yours.
+3. **Mainnet canary** — the production Safe and two-signer rehearsal are
+   [verified and recorded](docs/safe-mainnet-verification-2026-09-05.md), and
+   the [zero-cap Gate A deployment](docs/mainnet-deployment-2026-09-05.md) is
+   confirmed. Follow [docs/runbook-canary.md](docs/runbook-canary.md) to verify
+   source and complete the timelock handover; the pause rehearsal is complete.
+   Then open a tiny cap behind explicit go/no-go gates, soak, and stage it up.
 4. **Optional — v4 execution** — add `VoxRouterV4` routing to re-enable META,
    TSLA, and AMZN and unlock names like TSM. The equal-weight five already reaches
    full allocation on v3 alone, so this is growth, not a blocker.
