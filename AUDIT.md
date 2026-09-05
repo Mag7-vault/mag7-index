@@ -3,6 +3,10 @@
 This is an **unaudited pre-production** ERC-4626 index vault. The security
 documentation lives in [docs/audit/](docs/audit/).
 
+The current external-review candidate is pinned at
+`e1c7d91fd8dfa7818ef639c77aa3809903a54dc5`. Older hashes in the remediation
+record are historical context, not substitutes for reviewing the final code.
+
 ## Review package
 
 **[docs/audit/handoff.md](docs/audit/handoff.md)** — start here for the pinned

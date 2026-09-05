@@ -21,16 +21,16 @@ is **unaudited pre-production** and has **never held real funds**.
 | | |
 |---|---|
 | **Repo** | `Aeyod7/mag7-index` (private GitHub) |
-| **Commit** | Pin and record the final handoff commit returned by `git rev-parse HEAD` |
+| **Commit** | `e1c7d91fd8dfa7818ef639c77aa3809903a54dc5` |
 | **Branch** | `fix/audit-remediation-2026-09-04` |
 | **Baseline** | this branch's changes are the delta from `main` @ `b45271e` (§5) |
 
-Check out the final pinned commit on `fix/audit-remediation-2026-09-04`; it
-contains the in-scope code and this package. Contract source under `src/` remains
-identical to `482c1bc`, so that commit can still be used for contract code
-locations. Deployment and basket configuration under `script/` changed later;
-review those locations against the final handoff commit. Do not audit a moving
-branch tip.
+Read this handoff from the branch tip, then check out code commit
+`e1c7d91fd8dfa7818ef639c77aa3809903a54dc5`. It contains the final in-scope
+implementation; subsequent commits may update review documentation only.
+`482c1bc` and `92ade23` are historical review/remediation references only: both
+`src/` and `script/` changed afterward. Cite the pinned code commit for every
+code location and do not audit a moving branch tip.
 
 **Access:** the repo is private. We will either add the audit team as
 read-collaborators or send a `git archive`/bundle of the pinned commit — tell us
@@ -64,9 +64,9 @@ runs use Foundry defaults (256 runs × 500 calls per property).
 
 | Contract | Lines | Role |
 |---|---:|---|
-| [`src/IndexVault.sol`](../../src/IndexVault.sol) | 669 | ERC-4626 vault, weighting, both rebalance paths, redemptions, guardian/pause |
+| [`src/IndexVault.sol`](../../src/IndexVault.sol) | 678 | ERC-4626 vault, weighting, both rebalance paths, redemptions, guardian/pause |
 | [`src/PriceOracle.sol`](../../src/PriceOracle.sol) | 130 | keeper-posted price + market-cap feed, staleness-checked reads |
-| [`script/Deploy.s.sol`](../../script/Deploy.s.sol) | 102 | mainnet deploy + Safe/timelock/guardian handover wiring |
+| [`script/Deploy.s.sol`](../../script/Deploy.s.sol) | 206 | mainnet deploy + Safe/timelock/guardian handover wiring |
 
 Interfaces (`src/interfaces/IVoxRouter.sol` 27, `IVoxQuoter.sol` 33) and
 `src/lib/Constants.sol` (41) are ABI/address declarations matched to the live
@@ -81,17 +81,20 @@ review it opportunistically, not as a trust boundary).
 ## 5. What changed in this branch (the delta to focus on)
 
 This branch folds the former "v2" scope + governance hardening onto the reviewed
-v1 baseline (`b45271e`). 26 files, +2,901 / −55. The security-relevant deltas:
+v1 baseline (`b45271e`). The final candidate contains broader frontend and
+documentation work; the `src/`, `script/`, and `test/` delta is 12 files,
++1,883 / -34. The security-relevant deltas:
 
-- **`IndexVault.sol` (+371)** — new permissionless `rebalancePublic` + its guards
+- **`IndexVault.sol` (+374 / -16)** — new permissionless `rebalancePublic` + its guards
   (`_validatePublicLeg`), `MARKET_CAP` weight mode with cap-and-redistribute
   (`_resolvedWeights`), `setRebalancePolicy`/`setWeightMode`/`setMaxWeightBps`,
   guardian + `onlyGuardianOrOwner` pause, `Ownable2Step`.
-- **`PriceOracle.sol` (+62)** — market-cap feed (`postMarketCaps`/`getMarketCap`),
+- **`PriceOracle.sol` (+60 / -2)** — market-cap feed (`postMarketCaps`/`getMarketCap`),
   zero-price rejection, `Ownable2Step`.
-- **`Deploy.s.sol` (+43)** — `TimelockController(48h)` + Safe proposer/executor,
-  guardian wiring, two-step ownership handover.
-- New tests: `test/IndexVaultV2.t.sol` (607), `test/IndexVault.invariant.t.sol`
+- **`Deploy.s.sol` (+157 / -10)** — `TimelockController(48h)` + Safe
+  proposer/executor, guardian wiring, role-separation checks, zero-cap launch,
+  and two-step ownership handover.
+- New tests: `test/IndexVaultV2.t.sol` (644), `test/IndexVault.invariant.t.sol`
   (298).
 
 ## 6. The central trust assumption (read first)
@@ -146,15 +149,17 @@ adequate, but they are not undisclosed bugs:
 ## 10. Deliverables we expect
 
 - Severity-rated findings (with concrete exploit scenarios) against commit
-  `482c1bc`.
-- Remediation review after confirmed findings are fixed (remediation commit
-  `92ade23`; see [remediation-2026-09-04.md](./remediation-2026-09-04.md)).
-- Written confirmation that the final handoff commit, including the updated
-  deployment basket, was the version reviewed.
+  `e1c7d91fd8dfa7818ef639c77aa3809903a54dc5`.
+- Review of the historical remediation record (`482c1bc` -> `92ade23`; see
+  [remediation-2026-09-04.md](./remediation-2026-09-04.md)) as context, without
+  treating either historical commit as the final target.
+- Written confirmation that the pinned final commit, including the QQQ
+  deployment basket and post-remediation changes, was the version reviewed.
 
 ## 11. Operational context (not part of the review, but useful)
 
-The system ships **dormant**: STATIC equal-weight-five basket, permissionless
+The system ships **dormant**: STATIC equal-weight-five basket (NVDA, AAPL,
+GOOGL, QQQ, NFLX), permissionless
 rebalancing disabled (zero notional), MARKET_CAP off. Enabling each is an
 owner/timelock action after launch. Mainnet deployment itself is gated behind a
 Safe multisig, a 48h timelock handover, and a staged-cap canary — see
