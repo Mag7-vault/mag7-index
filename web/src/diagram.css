@@ -1,0 +1,320 @@
+/* Diagram geometry shares the SVG's coordinate system, including its 3D shell. */
+.hero.flow-only {
+  display: block;
+  min-height: 0;
+}
+.flow-only .hero-flow {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px var(--pad);
+}
+.flow-only .flow-canvas {
+  max-height: none;
+}
+@media (min-width: 1100px) {
+  .flow-only .hero-flow {
+    grid-template-columns: minmax(0, 1fr) 185px;
+    gap: 28px;
+    padding-top: 20px;
+  }
+  .flow-only .flow-canvas {
+    margin-top: -42px;
+  }
+  .flow-only .flow-heading {
+    position: relative;
+    z-index: 1;
+  }
+  .flow-only .stock-node {
+    font-size: 14px;
+  }
+  .flow-only .stock-node span {
+    font-size: 12px;
+    width: 34px;
+  }
+  .flow-only .flow-caption {
+    font-size: 11px;
+  }
+  .flow-only .execution {
+    margin-top: 68px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.flow-diagram .traveler {
+  filter: drop-shadow(0 0 5px var(--stock-color, #c4ee91));
+}
+.flow-diagram .traveler circle {
+  fill: var(--stock-color, #c4ee91);
+}
+.flow-diagram .stock-node i {
+  background: var(--stock-color, #c4ee91);
+}
+.flow-diagram .stock-node strong {
+  color: var(--stock-color, #c4ee91);
+}
+.flow-diagram .allocation-line.selected {
+  stroke: var(--stock-color, #c4ee91);
+}
+.flow-diagram .stock-node.selected {
+  color: var(--stock-color, #c4ee91);
+}
+.flow-diagram .flow-canvas {
+  aspect-ratio: 650 / 470;
+  container-type: inline-size;
+}
+.flow-diagram .vault-node {
+  left: 39.23077%;
+  top: 47.87234%;
+  width: 23.0769%;
+  height: 42%;
+}
+.flow-diagram .vault-node > .micro {
+  top: -27%;
+}
+.flow-diagram .cube-tilt {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  margin: 0;
+  perspective: none;
+}
+.flow-diagram .cube-spin {
+  display: grid;
+  place-items: center;
+  animation: none;
+}
+.flow-diagram .cube {
+  --edge: 16.3cqw;
+  width: var(--edge);
+  height: var(--edge);
+  left: auto;
+  top: auto;
+  transform: rotateX(-30deg) rotateY(45deg);
+  animation: none;
+}
+.flow-diagram .cube-tilt::after {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    #c4ee9129 0%,
+    #c4ee910d 40%,
+    transparent 72%
+  );
+  opacity: var(--vault-charge, 0);
+  pointer-events: none;
+}
+.flow-diagram .cube .face {
+  box-shadow: 0 0 8px rgb(196 238 145 / calc(var(--vault-charge, 0) * 0.2));
+}
+.flow-diagram .face {
+  inset: 0;
+  width: var(--edge);
+  height: var(--edge);
+  border-color: #bac8ce99;
+  background: transparent;
+}
+.flow-diagram .front {
+  transform: translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .back {
+  transform: rotateY(180deg) translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .left {
+  transform: rotateY(-90deg) translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .right {
+  transform: rotateY(90deg) translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .top {
+  transform: rotateX(90deg) translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--edge) / 2));
+}
+.flow-diagram .inner-core {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: scale(0.67);
+}
+.flow-diagram .inner-core .face {
+  border-style: dashed;
+  border-color: #bbcdcf65;
+  background: #18232bd9;
+  backface-visibility: hidden;
+}
+.flow-diagram .vault-shelf {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #b9c8cd80;
+  transform: rotateX(90deg) translateZ(calc(var(--edge) * 0.32));
+}
+.flow-diagram .vault-shelf.lower {
+  transform: rotateX(90deg) translateZ(calc(var(--edge) * -0.32));
+}
+.flow-diagram .cube-label {
+  font-size: clamp(12px, 2cqw, 22px);
+  text-shadow:
+    0 0 6px #18232b,
+    0 0 12px #18232b;
+}
+.flow-diagram .cube-label small {
+  font-size: clamp(8px, 1.2cqw, 12px);
+}
+.flow-diagram .deposit-node {
+  top: 47.87234%;
+}
+.flow-diagram .deposit-node > .micro {
+  top: calc(-23.4cqw + 27px);
+}
+.flow-diagram .deposit-node > .muted {
+  top: calc(-18.4cqw + 27px);
+}
+.flow-diagram .allocation-title {
+  top: 15.5%;
+  left: 69%;
+}
+.flow-diagram .stock-node {
+  left: 69%;
+  width: 30%;
+  min-height: 40px;
+  gap: 9px;
+}
+.flow-diagram .stock-node.selected {
+  text-shadow: 0 0 14px #c4ee9150;
+}
+.flow-diagram .reserve-node {
+  left: 55%;
+  width: 43%;
+  bottom: auto;
+  transform: translateY(-50%);
+  gap: 0;
+}
+.flow-diagram .reserve-node > div:last-child {
+  margin: 0;
+  white-space: normal;
+  transform: none;
+}
+.flow-diagram .reserve-node .micro {
+  color: var(--muted);
+}
+.flow-diagram .reserve-amount {
+  display: block;
+  margin-top: 7px;
+  color: var(--lime);
+  font-size: clamp(18px, 3cqw, 26px);
+  font-weight: 400;
+}
+.flow-diagram .reserve-amount span {
+  color: var(--muted);
+  font-size: 10px;
+  margin-left: 5px;
+}
+.flow-diagram .reserve-node p {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.reserve-platform path {
+  fill: none;
+  stroke: #aebfc8;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+.reserve-platform .platform-outer {
+  stroke-dasharray: 3 4;
+  opacity: 0.35;
+}
+.reserve-platform .platform-middle {
+  opacity: 0.65;
+}
+.reserve-platform .platform-inner {
+  opacity: 0.3;
+}
+.reserve-arrow {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 0.9;
+  opacity: 0.85;
+}
+.reserve-core {
+  fill: var(--lime);
+  filter: drop-shadow(0 0 4px #c4ee9170);
+}
+.flow-diagram .flow-caption {
+  max-width: 52ch;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+@media (max-width: 650px) {
+  .flow-diagram.vertical .vault-node {
+    left: 50%;
+    top: 26.6%;
+    width: 40%;
+    height: 24%;
+  }
+  .flow-diagram.vertical .vault-node > .micro {
+    top: -24%;
+  }
+  .flow-diagram.vertical .cube {
+    --edge: 26cqw;
+  }
+  .flow-diagram.vertical .cube-tilt {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  }
+  .flow-diagram.vertical .deposit-node {
+    top: 5%;
+  }
+  .flow-diagram.vertical .deposit-node > .micro {
+    position: static;
+    top: auto;
+  }
+  .flow-diagram.vertical .stock-node {
+    left: 64%;
+    width: 35%;
+  }
+  .flow-diagram.vertical .allocation-title {
+    left: 64%;
+    top: 43%;
+  }
+  .flow-diagram.vertical .reserve-node {
+    left: 47%;
+    width: 52%;
+    bottom: auto;
+  }
+  .flow-diagram.vertical .reserve-node > div:last-child {
+    margin: 0;
+    max-width: none;
+  }
+  .flow-diagram.vertical .reserve-amount span {
+    display: block;
+    margin: 3px 0 0;
+  }
+  .flow-diagram.vertical .reserve-node p {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-diagram .cube-tilt,
+  .flow-diagram.vertical .cube-tilt {
+    transform: none !important;
+  }
+}

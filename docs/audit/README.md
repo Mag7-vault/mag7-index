@@ -1,11 +1,13 @@
-# Mag7 Index Vault — Auditor Package
+# Mag7 Index Vault — Security-Review Package
 
-This directory is the entry point for an independent smart-contract / economic
-audit. It describes the system, the trust model, the invariants the code is
-built to hold, and where each is tested.
+This directory is the security-review package for the vault. It describes the
+system, the trust model, the invariants the code is built to hold, and where
+each is tested — an internal review reference and a starting point for any
+independent review.
 
 > **Status:** unaudited pre-production build, not approved for real deposits.
-> This package is prepared *for* an external audit; it is not itself an audit.
+> This package is prepared for an external audit; it documents the system's
+> security model, invariants, and test coverage but is not itself an audit.
 
 ## 1. Scope
 
@@ -81,7 +83,7 @@ and read back with a staleness guard. This is the system's main trust point and
 it is intentional — the same "keeper-maintained price feeds until public equity
 oracles exist on this chain" caveat that Voxelithic and DOSS both state openly.
 
-Consequences an auditor should weight:
+Consequences to weight:
 - A malicious or compromised **oracle keeper** can misprice NAV within the
   staleness window. Mitigations: staleness reverts (`totalAssets` fails closed
   rather than mis-marking), a price-independent `redeemInKind` escape hatch,
@@ -118,7 +120,7 @@ Worst-case value loss from a single call is bounded by `maxSlippage × notional`
 
 ```bash
 forge build
-forge test -vvv          # 50 unit tests + 4 handler-based invariants (+1 env-gated fork)
+forge test -vvv          # 60 unit tests + 4 handler-based invariants (+1 env-gated fork)
 cd keeper && npm ci && npm test
 ```
 
@@ -126,8 +128,8 @@ Invariant runs use 256 runs × 500 calls by default (`foundry.toml`).
 
 ## 7. Documents in this package
 
-- [`handoff.md`](./handoff.md) — **start here if you are the auditor**: the exact
-  commit under review, build/reproduce steps, scope, and where to focus.
+- [`handoff.md`](./handoff.md) — **start here**: the exact commit under review,
+  build/reproduce steps, scope, and where to focus.
 - [`threat-model.md`](./threat-model.md) — actors, assets, attack surface, and
   the mitigation for each threat.
 - [`invariants.md`](./invariants.md) — the properties the system must always

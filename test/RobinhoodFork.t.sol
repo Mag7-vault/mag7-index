@@ -23,10 +23,9 @@ contract RobinhoodForkTest is Test {
         assertGt(Tokens.USDG.code.length, 0);
         assertGt(Tokens.NVDA.code.length, 0);
         assertGt(Tokens.AAPL.code.length, 0);
-        assertGt(Tokens.TSLA.code.length, 0);
         assertGt(Tokens.GOOGL.code.length, 0);
-        assertGt(Tokens.META.code.length, 0);
-        assertGt(Tokens.AMZN.code.length, 0);
+        assertGt(Tokens.AMD.code.length, 0);
+        assertGt(Tokens.NFLX.code.length, 0);
         assertEq(IERC20MetadataView(Tokens.USDG).decimals(), 6);
         assertEq(IERC20MetadataView(Tokens.NVDA).decimals(), 18);
         assertLe(IVoxRouter(RobinhoodChain.VOX_ROUTER).feeBps(), 10_000);

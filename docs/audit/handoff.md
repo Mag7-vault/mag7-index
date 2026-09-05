@@ -1,38 +1,36 @@
-# Auditor Handoff — Mag7 Index Vault
+# Security Review Handoff — Mag7 Index Vault
 
-A cover sheet for the engaged audit firm. It pins the exact code under review,
-how to build and reproduce our results, what to scrutinize, and what we already
-know. The deeper material lives in the rest of this directory
-([README.md](./README.md), [threat-model.md](./threat-model.md),
-[invariants.md](./invariants.md), [test-coverage.md](./test-coverage.md)).
+This document pins the exact code under review, how to build and reproduce our
+results, what to scrutinize, and what we already know. The deeper material lives
+in the rest of this directory ([README.md](./README.md),
+[threat-model.md](./threat-model.md), [invariants.md](./invariants.md),
+[test-coverage.md](./test-coverage.md)).
 
 ---
 
 ## 1. The ask
 
 An independent **smart-contract security + economic** audit of the on-chain
-system below, followed by a **remediation review** after we fix confirmed
-findings. This is a small, self-contained surface (~900 lines of first-party
-Solidity, no external Solidity deps beyond vendored OpenZeppelin). The system is
-**unaudited pre-production** and has **never held real funds**; this audit is the
-gate before a funded testnet demo and a tiny mainnet canary.
+system below, followed by remediation review after confirmed findings are
+fixed. This is a small, self-contained surface (~900 lines of first-party
+Solidity, no external Solidity deps beyond vendored OpenZeppelin). The system
+is **unaudited pre-production** and has **never held real funds**.
 
 ## 2. Exact code under review
 
 | | |
 |---|---|
 | **Repo** | `Aeyod7/mag7-index` (private GitHub) |
-| **Commit** | `482c1bccb3e55f387b75069d13385f47320c9814` (`482c1bc`) |
-| **Branch** | `feat/launch-hardening-v2` |
+| **Commit** | Pin and record the final handoff commit returned by `git rev-parse HEAD` |
+| **Branch** | `fix/audit-remediation-2026-09-04` |
 | **Baseline** | this branch's changes are the delta from `main` @ `b45271e` (§5) |
 
-Check out the tip of `feat/launch-hardening-v2` — it contains the in-scope code
-**and** this audit package. The in-scope Solidity (`src/`, `script/`) is
-identical to commit `482c1bc` and has not changed since; the later commits only
-add these audit docs. Verify with `git diff 482c1bc HEAD -- src script` (no
-output). Reference `482c1bc` for code locations in findings. If we push fixes we
-will give you the remediation commit explicitly — otherwise please do not audit a
-moving `HEAD`.
+Check out the final pinned commit on `fix/audit-remediation-2026-09-04`; it
+contains the in-scope code and this package. Contract source under `src/` remains
+identical to `482c1bc`, so that commit can still be used for contract code
+locations. Deployment and basket configuration under `script/` changed later;
+review those locations against the final handoff commit. Do not audit a moving
+branch tip.
 
 **Access:** the repo is private. We will either add the audit team as
 read-collaborators or send a `git archive`/bundle of the pinned commit — tell us
@@ -49,8 +47,8 @@ Toolchain we used:
 # Solidity
 forge build
 forge fmt --check
-forge test -vvv        # expect: 55 passed, 0 failed
-                       # (23 v1 + 27 v2 unit, 4 handler-based invariants, 1 env-gated fork)
+forge test -vvv        # expect: 65 passed, 0 failed
+                       # (23 v1 + 30 v2 + 7 deploy-validation unit, 4 handler-based invariants, 1 env-gated fork)
 
 # Keeper (off-chain, mocked — no network)
 cd keeper && npm ci && npm test   # expect: 21 passed, 0 failed
@@ -82,7 +80,7 @@ review it opportunistically, not as a trust boundary).
 
 ## 5. What changed in this branch (the delta to focus on)
 
-This branch folds the former "v2" scope + governance hardening onto the audited
+This branch folds the former "v2" scope + governance hardening onto the reviewed
 v1 baseline (`b45271e`). 26 files, +2,901 / −55. The security-relevant deltas:
 
 - **`IndexVault.sol` (+371)** — new permissionless `rebalancePublic` + its guards
@@ -138,7 +136,7 @@ adequate, but they are not undisclosed bugs:
 
 ## 9. Prior review status (starting quality)
 
-- An internal **audit-prep review** and a separate **tooling-assisted security
+- An internal **code review** and a separate **tooling-assisted security
   pass** (diff `b45271e...482c1bc`) both completed with **no HIGH/MEDIUM
   findings**. One internal fix was already applied: `PriceOracle` now rejects a
   zero price at post time and fails closed on a stored zero in `getPrice`.
@@ -147,18 +145,18 @@ adequate, but they are not undisclosed bugs:
 
 ## 10. Deliverables we expect
 
-- A report with severity-rated findings (with concrete exploit scenarios),
-  against commit `482c1bc`.
-- A remediation review after we fix confirmed findings (we will supply the fix
-  commit).
-- We are happy to give a walkthrough call and answer questions on the trust
-  model or Voxelithic specifics.
+- Severity-rated findings (with concrete exploit scenarios) against commit
+  `482c1bc`.
+- Remediation review after confirmed findings are fixed (remediation commit
+  `92ade23`; see [remediation-2026-09-04.md](./remediation-2026-09-04.md)).
+- Written confirmation that the final handoff commit, including the updated
+  deployment basket, was the version reviewed.
 
-## 11. Operational context (not part of the audit, but useful)
+## 11. Operational context (not part of the review, but useful)
 
 The system ships **dormant**: STATIC equal-weight-five basket, permissionless
 rebalancing disabled (zero notional), MARKET_CAP off. Enabling each is an
 owner/timelock action after launch. Mainnet deployment itself is gated behind a
 Safe multisig, a 48h timelock handover, and a staged-cap canary — see
 [../runbook-canary.md](../runbook-canary.md). None of that removes the need for
-this audit; it is the operational envelope the audited code runs in.
+independent review; it is the operational envelope the code runs in.

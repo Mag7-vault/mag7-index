@@ -22,7 +22,7 @@ RESTORE_USDG_AMOUNT=500 npm run rebalance -- --restore-liquidity --execute
 
 Schedule `post-prices` every 15 minutes, `health` every 5 minutes, and the
 rebalance dry run daily. Allocation-changing execution should remain a weekly,
-reviewed operation until the system has independent audit history. Run a
+reviewed operation until the system has sufficient operational history. Run a
 liquidity restore when an exit request exceeds idle USDG. In `MARKET_CAP`
 weighting mode, schedule `post-market-caps --execute` (daily is ample — caps
 move slowly and carry a looser staleness window than prices).

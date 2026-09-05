@@ -28,12 +28,15 @@ https://voxelithic.xyz on 2026-09-03 — not guessed:
 - `src/interfaces/IVoxRouter.sol`, `IVoxQuoter.sol` — match the deployed ABIs
   exactly, including the custom errors
 
-**Two Mag7 names can't be held on a v3-only vault today.** MSFT isn't in
-Voxelithic's token list at all, and META (listed) only quotes on a v4 pool —
-IndexVault v1 executes v3 routes only. The basket therefore ships as an
-equal-weight five (NVDA, AAPL, TSLA, GOOGL, AMZN), each with a live v3 USDG
-pool. To grow it, add a name with a v3 venue — AMD, PLTR, MU, and NFLX are all
-live v3 (COIN has no USDG pool and TSM is v4-only as of 2026-09-04).
+**Several Mag7 names can't be held on a v3-only vault today.** MSFT isn't in
+Voxelithic's token list at all, and META, TSLA, and AMZN (all listed) only quote
+on v4 pools — IndexVault v1 executes v3 routes only. The basket therefore ships
+as an equal-weight five (NVDA, AAPL, GOOGL, AMD, NFLX), each with a live v3 USDG
+pool (verified 2026-09-05). Routing is volatile — names migrate v3<->v4 within a
+day — but the vault fails safe when a leg goes v4: deposits, redeems, and NAV are
+unaffected; only that leg's on-chain rebalance swap pauses until it returns to v3
+or is swapped out. To grow it, add a name with a live v3 venue (MU and the
+QQQ/SPY ETFs are v3 today; PLTR/MSTR/COIN/TSM are v4).
 `script/Deploy.s.sol` has a comment at the top marking where to edit this.
 
 ## Architecture
@@ -83,7 +86,7 @@ keeper/
   notify.mjs             non-fatal Slack/Discord alerting
   signer.mjs             raw-key or pluggable KMS signer
 docs/
-  audit/                 auditor package (scope, threat model, invariants, tests)
+  audit/                 security-review package (scope, threat model, invariants, tests)
   runbook-testnet.md     funded testnet demo runbook
   runbook-canary.md      mainnet canary runbook (approval-gated)
 ```
@@ -129,11 +132,12 @@ Safe's owners, threshold, and separation from deployer/keeper roles.
 ## Live route status
 
 Pool discovery and route construction now use Voxelithic's live HTTP API.
-`keeper/routes.snapshot.json` records the 2026-09-04 discovery result, while
+`keeper/routes.snapshot.json` records the 2026-09-05 discovery result, while
 every executable keeper run fetches fresh routes and `minOut` values. All five
-basket names — NVDA, AAPL, TSLA, GOOGL, AMZN — resolved to v3 pools. META
-resolved only to a v4 pool, so it is excluded from the v1 basket; the keeper
-still fails closed on any v4 route rather than submitting incompatible calldata.
+basket names — NVDA, AAPL, GOOGL, AMD, NFLX — resolved to v3 pools. META, TSLA,
+and AMZN resolve only to v4 pools, so they are excluded from the v1 basket; the
+keeper still fails closed on any v4 route rather than submitting incompatible
+calldata.
 
 ## Testnet
 
@@ -155,7 +159,7 @@ the canonical mainnet contract code and metadata without moving funds.
 
 This build folds the former **v2** scope (market-cap weighting + permissionless
 triggers) and the governance/keeper hardening into the current codebase, so they
-are audited together rather than bolted on afterward. Everything marked
+are reviewed and hardened together rather than bolted on afterward. Everything marked
 **shipped** below is code-complete and tested here — but still **unaudited**, and
 it ships **dormant** (STATIC equal-weight five, permissionless disabled,
 MARKET_CAP off) until enabled through the timelock after real deposits are live.
@@ -178,16 +182,16 @@ MARKET_CAP off) until enabled through the timelock after real deposits are live.
   entirely on-chain (due-gate, direction, no-overshoot, an oracle-implied `minOut`
   floor, a notional cap, and the 20% buffer). See
   [docs/audit/README.md](docs/audit/README.md) §5.
-- **Audit package** — scope, threat model, invariants, and an invariant→test map
-  under [docs/audit/](docs/audit/), plus handler-based invariant tests and full
-  unit coverage of the new surface. The internal audit-prep review's findings are
-  remediated.
+- **Security-review package** — scope, threat model, invariants, and an
+  invariant→test map under [docs/audit/](docs/audit/), plus handler-based
+  invariant tests and full unit coverage of the new surface. The internal
+  review's findings are remediated.
 
 **Remains before real money (your action, approval-gated — runbooks provided):**
 
-1. **Independent audit** — engage an external firm against this commit and
-   remediate their findings. `docs/audit/` is prepared for exactly that; it is a
-   package *for* an audit, not itself one.
+1. **Independent audit** — engage an external firm against the final pinned
+   commit and remediate its findings. `docs/audit/` is prepared for that review;
+   it is not itself an audit.
 2. **Funded testnet demo** — follow
    [docs/runbook-testnet.md](docs/runbook-testnet.md), including its mainnet-fork
    rehearsal (the keeper scripts need live Voxelithic and can't run on testnet
@@ -196,9 +200,9 @@ MARKET_CAP off) until enabled through the timelock after real deposits are live.
    create the Safe, deploy closed at a zero cap, hand ownership to the timelock,
    then open a tiny cap behind explicit go/no-go gates, soak, and stage it up. I do not create the Safe,
    hold keys, or broadcast — every gate is yours.
-4. **Optional — v4 execution** — add `VoxRouterV4` routing to re-enable META and
-   unlock names like TSM. The equal-weight five already reaches full allocation on
-   v3 alone, so this is growth, not a blocker.
+4. **Optional — v4 execution** — add `VoxRouterV4` routing to re-enable META,
+   TSLA, and AMZN and unlock names like TSM. The equal-weight five already reaches
+   full allocation on v3 alone, so this is growth, not a blocker.
 
 ## Demo script (for the client pitch)
 

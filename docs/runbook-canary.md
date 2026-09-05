@@ -5,9 +5,10 @@
 > keys, broadcast mainnet transactions, or move funds. Every step that touches
 > mainnet is **gated on your explicit go/no-go**.
 >
-> **Precondition:** the external audit is complete, its findings are remediated,
-> and the [testnet demo](./runbook-testnet.md) (incl. the mainnet-fork rehearsal
-> §5) passed. Do **not** start the canary before all three are true.
+> **Precondition:** the independent external audit is complete, its findings
+> are remediated, and the [testnet demo](./runbook-testnet.md) (incl. the
+> mainnet-fork rehearsal §5) passed. Do **not** start the canary before all three
+> are true.
 
 Chain: Robinhood `4663`. Asset: canonical USDG. Router: canonical VoxRouter
 (v3). Everything ships **dormant**: STATIC equal-weight five, permissionless
@@ -56,12 +57,12 @@ Never collapse two gates into one action. If any check in a gate fails, stop.
       the very first open (you raise it at Gate C/D), `ORACLE_KEEPER_ADDRESS`,
       `REBALANCE_KEEPER_ADDRESS`, `ALERT_WEBHOOK_URL`.
 - [ ] `forge build && forge test -vvv` green on the exact commit you will deploy.
-      Record the commit hash; the audit was against it.
+      Record the commit hash; the external audit must cover it.
 
 ### 🚦 GATE A — operator go to broadcast the deploy
 
 Confirm: correct chain, correct Safe, cap starts at zero, keeper addresses correct,
-commit hash matches the audited one. On your **go**:
+commit hash matches the externally audited one. On your **go**:
 
 ## 3. Deploy
 
@@ -150,7 +151,7 @@ warm.
 ## 6. Stand up the keeper
 
 - Wire keeper `.env`: `INDEX_VAULT_ADDRESS`, `PRICE_ORACLE_ADDRESS`,
-  `BASKET_SYMBOLS=NVDA,AAPL,TSLA,GOOGL,AMZN`, slippage/impact/tolerance defaults,
+  `BASKET_SYMBOLS=NVDA,AAPL,GOOGL,AMD,NFLX`, slippage/impact/tolerance defaults,
   `ALERT_WEBHOOK_URL`, signer config.
 - **Prices:** schedule `npm run post-prices` on a cadence well under
   `maxStaleness` (default 1h) — e.g. every 10–15 min. Each run does a

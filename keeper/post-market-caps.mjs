@@ -11,7 +11,7 @@ import { sendAlert } from "./notify.mjs";
 // needed once the vault is switched to MARKET_CAP mode; harmless before then.
 
 const ORACLE_ABI = ["function postMarketCaps(address[] tokens,uint256[] caps) external"];
-const DEFAULT_BASKET = ["NVDA", "AAPL", "TSLA", "GOOGL", "AMZN"];
+const DEFAULT_BASKET = ["NVDA", "AAPL", "GOOGL", "AMD", "NFLX"];
 
 async function main() {
   const execute = process.argv.includes("--execute");

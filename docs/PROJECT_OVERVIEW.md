@@ -15,14 +15,15 @@ The first version uses five equally weighted tokenized equities:
 
 - NVIDIA (NVDA)
 - Apple (AAPL)
-- Tesla (TSLA)
 - Alphabet (GOOGL)
-- Amazon (AMZN)
+- Advanced Micro Devices (AMD)
+- Netflix (NFLX)
 
-Microsoft is not currently available through the integrated token list, while
-Meta currently requires a Voxelithic v4 route that this version does not yet
-support. The first release is therefore a five-asset, Mag7-style basket rather
-than all seven companies.
+Microsoft is not in the integrated token list, and Meta, Tesla, and Amazon
+currently route only through Voxelithic v4 pools that this version does not yet
+execute. The first release therefore ships five large-cap tech names that have
+live v3 USDG pools; broader "Magnificent Seven" coverage can be added once v4
+routing lands.
 
 ## How it works
 
@@ -68,8 +69,8 @@ The current design includes:
 
 ## Current status
 
-The contracts, keeper service, deployment scripts, tests, runbooks, and audit
-handoff package have been built. The current automated suite passes:
+The contracts, keeper service, deployment scripts, tests, runbooks, and
+security-review handoff package have been built. The current automated suite passes:
 
 - 65 Solidity tests, including invariant testing;
 - 21 keeper-service tests; and
@@ -77,7 +78,7 @@ handoff package have been built. The current automated suite passes:
   metadata.
 
 The project is still **pre-production**. It has not been opened for public
-deposits and has not yet completed an independent professional audit.
+deposits and has not completed an independent professional audit.
 
 ## What remains before launch
 
@@ -89,5 +90,5 @@ deposits and has not yet completed an independent professional audit.
 6. A small mainnet canary followed by gradual cap increases after stable soak
    periods.
 
-Voxelithic v4 routing can be added later to support assets such as Meta, but it
-is not required for the five-asset first release.
+Voxelithic v4 routing can be added later to support assets such as Meta, Tesla,
+and Amazon, but it is not required for the five-asset first release.

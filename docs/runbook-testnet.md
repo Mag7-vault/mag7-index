@@ -5,9 +5,8 @@
 > keys and RPC. Claude prepared this runbook but does **not** execute it.
 >
 > **Status of the code:** unaudited pre-production. This demo is a rehearsal, not
-> a launch. Do it *before* the external audit sign-off if you want an early
-> operational shakedown, but real money only follows audit + the canary
-> ([runbook-canary.md](./runbook-canary.md)).
+> a launch. Complete it before the mainnet canary; real money only follows an
+> independent external audit and the canary ([runbook-canary.md](./runbook-canary.md)).
 
 ## 0. What this proves — and what it does not
 

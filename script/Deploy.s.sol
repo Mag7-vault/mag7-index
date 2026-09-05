@@ -16,14 +16,20 @@ interface ISafeLike {
 }
 
 /// @dev NOTE ON BASKET COMPOSITION
-/// Two "Magnificent Seven" names cannot go in a v3-only vault today:
+/// IndexVault v1 executes VoxRouter v3 routes only (see keeper/voxelithic.mjs),
+/// so every basket name needs a live v3 USDG pool. Several "Magnificent Seven"
+/// names cannot go in a v3-only vault today:
 ///   - MSFT has no Robinhood Token on this chain (not in Voxelithic's list).
-///   - META is listed but only quotes on a Voxelithic v4 pool; IndexVault v1
-///     executes v3 routes only, so it cannot be reached (see keeper/voxelithic.mjs).
-/// This script therefore ships an equal-weight FIVE (NVDA, AAPL, TSLA, GOOGL,
-/// AMZN), each with a live v3 USDG pool. To grow the basket, add a name with a
-/// v3 venue — AMD/PLTR/MU/NFLX are all live v3 as of 2026-09-04 (COIN has no
-/// USDG pool and TSM is v4-only) — just keep weightsBps summing to 10_000.
+///   - META, TSLA, and AMZN are listed but only quote on Voxelithic v4 pools,
+///     so their sleeves cannot be traded on-chain (verified 2026-09-05).
+/// This script therefore ships an equal-weight FIVE (NVDA, AAPL, GOOGL, AMD,
+/// NFLX), each with a live v3 USDG pool. Routing is volatile — names migrate
+/// v3<->v4 within a day — but the system fails safe when a leg goes v4:
+/// deposits, redeems, redeemInKind, and NAV pricing are unaffected; only that
+/// leg's on-chain rebalance swap is blocked until it returns to v3 or is
+/// swapped out. To grow or adjust the basket, add a name with a live v3 venue
+/// (MU and the QQQ/SPY ETFs are v3 today; PLTR/MSTR/COIN/TSM are v4) — just keep
+/// weightsBps summing to 10_000.
 ///
 /// @dev NOTE ON GOVERNANCE
 /// When SAFE_ADDRESS is set, this deploys an OZ TimelockController whose sole
@@ -84,9 +90,9 @@ contract Deploy is Script {
         address[] memory basket = new address[](5);
         basket[0] = Tokens.NVDA;
         basket[1] = Tokens.AAPL;
-        basket[2] = Tokens.TSLA;
-        basket[3] = Tokens.GOOGL;
-        basket[4] = Tokens.AMZN;
+        basket[2] = Tokens.GOOGL;
+        basket[3] = Tokens.AMD;
+        basket[4] = Tokens.NFLX;
 
         uint16[] memory weights = new uint16[](5);
         weights[0] = 2000;

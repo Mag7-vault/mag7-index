@@ -1,6 +1,6 @@
 # Test Coverage — Mag7 Index Vault
 
-55 tests total: 54 across three suites plus one env-gated fork test. Run:
+65 tests total: 60 unit tests across three suites, 4 handler-based invariants, and one env-gated fork test. Run:
 
 ```bash
 forge test -vvv                 # all Solidity tests + invariants
@@ -10,8 +10,11 @@ cd keeper && npm test           # 21 keeper adapter tests (mocked, no network)
 Suites:
 - [`test/IndexVault.t.sol`](../../test/IndexVault.t.sol) — 23 v1 accounting &
   safety tests (unchanged by the v2 work; STATIC mode is the default).
-- [`test/IndexVaultV2.t.sol`](../../test/IndexVaultV2.t.sol) — 27 tests for the
+- [`test/IndexVaultV2.t.sol`](../../test/IndexVaultV2.t.sol) — 30 tests for the
   launch-hardening + v2 surface.
+- [`test/DeployValidation.t.sol`](../../test/DeployValidation.t.sol) — 7 deploy-time
+  config-validation tests: mainnet Safe/timelock wiring, keeper/deployer/Safe role
+  separation, Safe codehash/singleton/threshold checks, and the cap-starts-at-zero guard.
 - [`test/IndexVault.invariant.t.sol`](../../test/IndexVault.invariant.t.sol) — 4
   handler-based invariants (256 runs × 500 calls each by default).
 - [`test/RobinhoodFork.t.sol`](../../test/RobinhoodFork.t.sol) — 1 fork test
@@ -64,7 +67,7 @@ resolution), `marketcap` (provider parsing + snapshot/equal-weight fallback
 chain), and `voxelithic` (v3 route validation, v4 rejection, price-impact and
 token-address checks). 21 tests, all mocked — no network access required.
 
-## Gaps / notes for the auditor
+## Gaps / notes
 
 - Fork test requires a Robinhood Chain RPC; run it against a pinned block before
   sign-off to confirm live router/token metadata still matches.
