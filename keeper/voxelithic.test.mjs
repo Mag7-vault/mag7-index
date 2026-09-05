@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { TOKENS } from "voxelithic-interfaces";
-import { getQuote, toV3Hops } from "./voxelithic.mjs";
+import { checkV3RoundTrip, getQuote, toV3Hops } from "./voxelithic.mjs";
 
 const response = (body) => ({ ok: true, json: async () => body });
 const baseResult = {
@@ -18,6 +18,39 @@ test("validates and converts a v3 quote", async () => {
 
 test("rejects unsupported v4 routes", () => {
   assert.throws(() => toV3Hops({ quote: { family: "v4", route: [{}] } }), /only accepts VoxRouter v3/);
+});
+
+test("requires executable v3 routes in both directions", async () => {
+  const fetchImpl = async (url) => {
+    const query = new URL(url).searchParams;
+    const tokenIn = query.get("tokenIn");
+    const tokenOut = query.get("tokenOut");
+    return response({
+      ...structuredClone(baseResult),
+      tokenIn: TOKENS[tokenIn],
+      tokenOut: TOKENS[tokenOut],
+    });
+  };
+  assert.deepEqual(await checkV3RoundTrip("NVDA", { fetchImpl }), {
+    sellHops: 1,
+    buyHops: 1,
+  });
+
+  let calls = 0;
+  await assert.rejects(
+    () =>
+      checkV3RoundTrip("NVDA", {
+        fetchImpl: async (url) => {
+          const query = new URL(url).searchParams;
+          const result = structuredClone(baseResult);
+          result.tokenIn = TOKENS[query.get("tokenIn")];
+          result.tokenOut = TOKENS[query.get("tokenOut")];
+          if (++calls === 2) result.quote.family = "v4";
+          return response(result);
+        },
+      }),
+    /only accepts VoxRouter v3/,
+  );
 });
 
 test("rejects excessive price impact", async () => {

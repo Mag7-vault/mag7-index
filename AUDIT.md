@@ -20,4 +20,4 @@ the review package.
 ## Build & test
 
     forge build && forge test -vvv          # 65 passing (Foundry, solc 0.8.26)
-    cd keeper && npm ci && npm test         # 21 passing (Node >= 20)
+    cd keeper && npm ci && npm test         # 22 passing (Node >= 20)

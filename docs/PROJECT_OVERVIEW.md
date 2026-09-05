@@ -73,12 +73,14 @@ The contracts, keeper service, deployment scripts, tests, runbooks, and
 security-review handoff package have been built. The current automated suite passes:
 
 - 65 Solidity tests, including invariant testing;
-- 21 keeper-service tests; and
+- 22 keeper-service tests; and
 - a live Robinhood Chain fork check for configured contract addresses and token
   metadata.
 
 The project is still **pre-production**. It has not been opened for public
-deposits and has not completed an independent professional audit.
+deposits and has not completed an independent professional audit. The latest
+route preflight also marks the configured AMD basket leg as v4-only, which
+blocks a v3-only mainnet launch until the basket or execution layer changes.
 
 ## What remains before launch
 

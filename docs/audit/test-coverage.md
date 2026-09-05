@@ -4,7 +4,7 @@
 
 ```bash
 forge test -vvv                 # all Solidity tests + invariants
-cd keeper && npm test           # 21 keeper adapter tests (mocked, no network)
+cd keeper && npm test           # 22 keeper adapter tests (mocked, no network)
 ```
 
 Suites:
@@ -65,7 +65,8 @@ run: 4 invariants × 256 runs × 500 calls, 0 failures, 0 unexpected reverts.
 `notify` (webhook alerting, non-fatal), `signer` (raw + module/KMS signer
 resolution), `marketcap` (provider parsing + snapshot/equal-weight fallback
 chain), and `voxelithic` (v3 route validation, v4 rejection, price-impact and
-token-address checks). 21 tests, all mocked — no network access required.
+token-address checks, plus bidirectional v3 route-family preflight). 22 tests,
+all mocked — no network access required.
 
 ## Gaps / notes
 

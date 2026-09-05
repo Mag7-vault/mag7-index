@@ -2,13 +2,18 @@
   "source": "https://voxelithic.xyz/api/v1/quote",
   "chainId": 4663,
   "observedAt": "2026-09-05",
-  "blockApprox": 54773510,
+  "blockApprox": 54994035,
+  "mainnetReadiness": "NO-GO: AMD currently resolves through v4 and IndexVault v1 only executes v3 routes",
   "note": "Discovery evidence only. The keeper fetches a fresh route before every trade. Routing is volatile: names migrate v3<->v4 within a day, and the vault/keeper fail safe when a basket leg goes v4 — only that leg's on-chain swap is blocked; deposits, redeems, redeemInKind, and NAV pricing are unaffected.",
   "tokenToUsdg": {
     "NVDA": { "family": "v3", "pool": "0xd4eb21209c4d6093f80b5b84f5c45cc093ea14a3" },
     "AAPL": { "family": "v3", "pool": "0xaae0d815ee56e4092a5e5c2911e676fea50b2d6d" },
     "GOOGL": { "family": "v3", "pool": "0x34d0dc122cf9a8eb296fc5e0d3a233625d7d19b7" },
-    "AMD": { "family": "v3", "pool": "0x48d284a2a4d3dc1b3da08231fe44317e7e7aa51f" },
+    "AMD": {
+      "family": "v4",
+      "route": "AMD->SPY->USDG",
+      "reason": "IndexVault v1 cannot execute this route; mainnet launch is blocked until the basket changes or v4 execution is implemented and reviewed"
+    },
     "NFLX": { "family": "v3", "pool": "0x59895c0302f41aeaa129d2fa2442cec01e7ef45e" }
   },
   "excludedFromBasket": {

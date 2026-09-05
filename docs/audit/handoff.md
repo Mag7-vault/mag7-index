@@ -51,7 +51,7 @@ forge test -vvv        # expect: 65 passed, 0 failed
                        # (23 v1 + 30 v2 + 7 deploy-validation unit, 4 handler-based invariants, 1 env-gated fork)
 
 # Keeper (off-chain, mocked — no network)
-cd keeper && npm ci && npm test   # expect: 21 passed, 0 failed
+cd keeper && npm ci && npm test   # expect: 22 passed, 0 failed
 ```
 
 The one fork test (`test/RobinhoodFork.t.sol`) is skipped without a Robinhood

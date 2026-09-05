@@ -77,6 +77,17 @@ export function toV3Hops(quoteResult) {
   });
 }
 
+export async function checkV3RoundTrip(symbol, options = {}) {
+  const [sell, buy] = await Promise.all([
+    getQuote(symbol, "USDG", "0.01", options),
+    getQuote("USDG", symbol, "1", options),
+  ]);
+  return {
+    sellHops: toV3Hops(sell).length,
+    buyHops: toV3Hops(buy).length,
+  };
+}
+
 export async function getApiHealth(options = {}) {
   const result = await getJson("/health", options);
   if (result.chainId !== CHAIN_ID) throw new Error(`Unexpected Voxelithic chain ID ${result.chainId}`);

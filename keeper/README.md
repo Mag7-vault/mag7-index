@@ -27,6 +27,10 @@ liquidity restore when an exit request exceeds idle USDG. In `MARKET_CAP`
 weighting mode, schedule `post-market-caps --execute` (daily is ample — caps
 move slowly and carry a looser staleness window than prices).
 
+`health` validates fresh oracle prices, the USDG buffer, and executable v3
+routes in both directions for every basket token. A v4-only or unavailable leg
+makes the report red even when NAV and the buffer are otherwise healthy.
+
 The keeper reads `vault.targetWeight(token)`, the resolved target under whichever
 weighting mode is active, so nothing here changes between `STATIC` and
 `MARKET_CAP` mode.

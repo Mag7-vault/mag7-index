@@ -32,7 +32,7 @@ chain guards to force them onto testnet.
 ## 1. Pre-flight checklist
 
 - [ ] `forge fmt --check && forge build && forge test -vvv` all green locally.
-- [ ] `cd keeper && npm ci && npm test` green (21 tests).
+- [ ] `cd keeper && npm ci && npm test` green (22 tests).
 - [ ] **Three distinct keys**, none reused as another's role, none holding
       mainnet value: `DEPLOYER_PRIVATE_KEY`, `ORACLE_KEEPER_PRIVATE_KEY`,
       `REBALANCE_KEEPER_PRIVATE_KEY`. The deployer key is throwaway for testnet.
@@ -128,6 +128,11 @@ control.
 anvil --fork-url "$ROBINHOOD_MAINNET_RPC" --chain-id 4663 &
 ```
 
+The repository includes fork-only mock-Safe helpers for this rehearsal. They
+require `ALLOW_UNSAFE_FORK_MOCK_SAFE=true` and must never be used as production
+governance: `DeployForkSafe.s.sol`, `ScheduleHandover.s.sol`, and
+`ExecuteHandover.s.sol`.
+
 - **Governance:** run `Deploy.s.sol` against the fork with a test `SAFE_ADDRESS`
   (an anvil account). Confirm it deploys the `TimelockController`, sets the
   guardian, and leaves ownership **pending** to the timelock. Then rehearse the
@@ -150,6 +155,7 @@ anvil --fork-url "$ROBINHOOD_MAINNET_RPC" --chain-id 4663 &
   paused.
 - On the fork: `health.mjs` prints `ok: false`, a keeper `staticCall` passes but
   the broadcast reverts, or quotes exceed `MAX_PRICE_IMPACT_BPS`.
+- Any basket leg resolves through an unsupported route family such as v4.
 - Alert webhook throws (rather than returning `delivered:false`) — that would
   mean an alerting bug could crash the keeper.
 

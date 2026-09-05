@@ -2,12 +2,15 @@
 import "dotenv/config";
 import { ethers } from "ethers";
 import { CHAIN_ID, TOKENS } from "voxelithic-interfaces";
-import { getApiHealth } from "./voxelithic.mjs";
+import { checkV3RoundTrip, getApiHealth } from "./voxelithic.mjs";
 import { sendAlert } from "./notify.mjs";
 
 const VAULT_ABI = ["function asset() view returns(address)", "function oracle() view returns(address)", "function paused() view returns(bool)", "function basketLength() view returns(uint256)", "function basketTokens(uint256) view returns(address)", "function MIN_IDLE_USDG_BPS() view returns(uint16)", "function totalAssets() view returns(uint256)"];
 const ORACLE_ABI = ["function prices(address) view returns(uint256 priceUsdg,uint64 updatedAt)", "function maxStaleness() view returns(uint256)"];
 const ERC20_ABI = ["function balanceOf(address) view returns(uint256)"];
+const SYMBOL_BY_ADDRESS = new Map(
+  Object.values(TOKENS).map((token) => [token.address.toLowerCase(), token.symbol]),
+);
 
 async function main() {
   const rpcUrl = process.env.ROBINHOOD_MAINNET_RPC;
@@ -22,22 +25,44 @@ async function main() {
   const oracle = new ethers.Contract(oracleAddress, ORACLE_ABI, provider);
   const [idle, maxStaleness] = await Promise.all([new ethers.Contract(assetAddress, ERC20_ABI, provider).balanceOf(vaultAddress), oracle.maxStaleness()]);
   const prices = [];
+  const symbols = [];
   let stale = false;
   for (let i = 0n; i < count; i += 1n) {
     const token = await vault.basketTokens(i);
+    const symbol = SYMBOL_BY_ADDRESS.get(token.toLowerCase());
+    if (!symbol) throw new Error(`Unknown basket token ${token}`);
+    symbols.push(symbol);
     const [price, updatedAt] = await oracle.prices(token);
     const age = BigInt(block.timestamp) - updatedAt;
     if (updatedAt === 0n || age > maxStaleness) stale = true;
     prices.push({ token, priceUsdg: price.toString(), updatedAt: Number(updatedAt), ageSeconds: Number(age) });
   }
+  const routes = await Promise.all(
+    symbols.map(async (symbol) => {
+      try {
+        return {
+          symbol,
+          executable: true,
+          ...(await checkV3RoundTrip(symbol, { maxPriceImpactBps: 100 })),
+        };
+      } catch (error) {
+        return {
+          symbol,
+          executable: false,
+          error: error.message ?? String(error),
+        };
+      }
+    }),
+  );
+  const routesHealthy = routes.every((route) => route.executable);
   let totalAssets;
   try { totalAssets = await vault.totalAssets(); } catch { totalAssets = null; }
   const bufferHealthy = totalAssets === null || idle * 10_000n >= totalAssets * BigInt(bufferBps);
-  const report = { ok: !stale && bufferHealthy, chainId: Number(network.chainId), blockNumber: block.number, apiStatus: api.status ?? "ok", vault: vaultAddress, paused, idleUsdg: ethers.formatUnits(idle, 6), totalAssetsUsdg: totalAssets === null ? null : ethers.formatUnits(totalAssets, 6), bufferHealthy, stalePrices: stale, prices };
+  const report = { ok: !stale && bufferHealthy && routesHealthy, chainId: Number(network.chainId), blockNumber: block.number, apiStatus: api.status ?? "ok", vault: vaultAddress, paused, idleUsdg: ethers.formatUnits(idle, 6), totalAssetsUsdg: totalAssets === null ? null : ethers.formatUnits(totalAssets, 6), bufferHealthy, stalePrices: stale, routesHealthy, routes, prices };
   console.log(JSON.stringify(report, null, 2));
   if (!report.ok) {
     process.exitCode = 2;
-    await sendAlert("error", "Keeper health check FAILED", { vault: vaultAddress, stalePrices: stale, bufferHealthy, paused, idleUsdg: report.idleUsdg });
+    await sendAlert("error", "Keeper health check FAILED", { vault: vaultAddress, stalePrices: stale, bufferHealthy, routesHealthy, paused, idleUsdg: report.idleUsdg });
   }
 }
 

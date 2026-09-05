@@ -132,12 +132,13 @@ Safe's owners, threshold, and separation from deployer/keeper roles.
 ## Live route status
 
 Pool discovery and route construction now use Voxelithic's live HTTP API.
-`keeper/routes.snapshot.json` records the 2026-09-05 discovery result, while
-every executable keeper run fetches fresh routes and `minOut` values. All five
-basket names — NVDA, AAPL, GOOGL, AMD, NFLX — resolved to v3 pools. META, TSLA,
-and AMZN resolve only to v4 pools, so they are excluded from the v1 basket; the
-keeper still fails closed on any v4 route rather than submitting incompatible
-calldata.
+`keeper/routes.snapshot.json` records the latest discovery result, while every
+executable keeper run fetches fresh routes and `minOut` values. On 2026-09-05,
+NVDA, AAPL, GOOGL, and NFLX resolved to v3, but AMD moved to v4. The configured
+basket is therefore **not mainnet-executable** today. Keeper health now checks
+both directions for every basket route and fails closed on any v4 route. Do not
+deploy or open a cap until the basket changes or v4 execution is implemented,
+tested, and independently reviewed.
 
 ## Testnet
 
