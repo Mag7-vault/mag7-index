@@ -22,16 +22,14 @@ interface ISafeLike {
 ///   - MSFT has no Robinhood Token on this chain (not in Voxelithic's list).
 ///   - META, TSLA, and AMZN are listed but only quote on Voxelithic v4 pools,
 ///     so their sleeves cannot be traded on-chain (verified 2026-09-05).
-/// This script is configured for an equal-weight FIVE (NVDA, AAPL, GOOGL, AMD,
-/// NFLX). Routing is volatile — names migrate
-/// v3<->v4 within a day — but the system fails safe when a leg goes v4:
+/// This script is configured for an equal-weight FIVE (NVDA, AAPL, GOOGL, QQQ,
+/// NFLX). Routing is volatile — names migrate v3<->v4 within a day — but the
+/// system fails safe when a leg goes v4:
 /// deposits, redeems, redeemInKind, and NAV pricing are unaffected; only that
 /// leg's on-chain rebalance swap is blocked until it returns to v3 or is
-/// swapped out. To grow or adjust the basket, add a name with a live v3 venue
-/// As of the latest 2026-09-05 preflight, AMD resolves through v4, so this exact
-/// basket is a mainnet NO-GO until it changes or v4 execution is implemented
-/// and reviewed. Always run keeper health immediately before a deployment and
-/// keep weightsBps summing to 10_000.
+/// swapped out. As of the latest 2026-09-05 preflight, all five configured
+/// names resolve bidirectionally through v3. Always run keeper health
+/// immediately before a deployment and keep weightsBps summing to 10_000.
 ///
 /// @dev NOTE ON GOVERNANCE
 /// When SAFE_ADDRESS is set, this deploys an OZ TimelockController whose sole
@@ -93,7 +91,7 @@ contract Deploy is Script {
         basket[0] = Tokens.NVDA;
         basket[1] = Tokens.AAPL;
         basket[2] = Tokens.GOOGL;
-        basket[3] = Tokens.AMD;
+        basket[3] = Tokens.QQQ;
         basket[4] = Tokens.NFLX;
 
         uint16[] memory weights = new uint16[](5);

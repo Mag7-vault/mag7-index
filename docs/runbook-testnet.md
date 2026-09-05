@@ -123,6 +123,12 @@ This is where the keeper scripts and the Safe/timelock handover are actually
 exercised, because a fork has both canonical Voxelithic **and** accounts you
 control.
 
+Use an archive-capable managed RPC for the swap-execution portion. The public
+rate-limited endpoint can start a fork and validate code, but may reject
+historical storage reads after Anvil pins or time-warps the fork. Governance
+time-warp and keeper execution may be run as separate fork instances so the
+live quote service and forked pool state remain aligned.
+
 ```bash
 # Fork mainnet locally; keeper scripts see chain 4663 and real Voxelithic.
 anvil --fork-url "$ROBINHOOD_MAINNET_RPC" --chain-id 4663 &

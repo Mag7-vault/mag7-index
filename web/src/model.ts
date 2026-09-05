@@ -74,7 +74,7 @@ export const names: Record<string, string> = {
   NVDA: "NVIDIA",
   AAPL: "Apple",
   GOOGL: "Alphabet",
-  AMD: "Advanced Micro Devices",
+  QQQ: "Invesco QQQ",
   NFLX: "Netflix",
 };
 export const demoAccount = "0x000000000000000000000000000000000000dEaD";

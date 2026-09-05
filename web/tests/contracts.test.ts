@@ -59,7 +59,7 @@ test(
           1000000000000n,
         ]);
       const tokens = [];
-      for (const symbol of ["NVDA", "AAPL", "GOOGL", "AMD", "NFLX"])
+      for (const symbol of ["NVDA", "AAPL", "GOOGL", "QQQ", "NFLX"])
         tokens.push(await deploy("MockERC20", [symbol, symbol, 18]));
       await (
         await vault.setBasket(
@@ -90,7 +90,7 @@ test(
         assert.equal(s.holdings.length, 5);
         assert.deepEqual(
           s.holdings.map((h) => h.symbol),
-          ["NVDA", "AAPL", "GOOGL", "AMD", "NFLX"],
+          ["NVDA", "AAPL", "GOOGL", "QQQ", "NFLX"],
         );
         assert.equal(s.assetDecimals, 6);
         assert.equal(s.allowance, 0n);

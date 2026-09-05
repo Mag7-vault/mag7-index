@@ -8,7 +8,7 @@ export const articles: Article[] = [
   {
     slug: "overview",
     title: "Meet MAG7",
-    summary: "Five market leaders. One on-chain position.",
+    summary: "Five growth exposures. One on-chain position.",
     sections: [
       {
         id: "what-you-own",
@@ -22,7 +22,8 @@ export const articles: Article[] = [
         id: "five-assets",
         title: "Why five, not seven?",
         body: [
-          "The initial basket is NVIDIA (NVDA), Apple (AAPL), Alphabet (GOOGL), Advanced Micro Devices (AMD), and Netflix (NFLX). Each targets 20% of the invested basket, not 20% of the entire vault.",
+          "The initial basket is NVIDIA (NVDA), Apple (AAPL), Alphabet (GOOGL), the Invesco QQQ ETF (QQQ), and Netflix (NFLX). Each targets 20% of the invested basket, not 20% of the entire vault.",
+          "QQQ is an ETF exposure rather than a single company and includes some of the other basket names. The five sleeves therefore overlap economically even though each vault asset has the same target weight.",
           "The current integration executes Voxelithic v3 routes. At the September 5, 2026 integration review, Microsoft was unavailable in the integrated token list; Meta, Tesla and Amazon required v4 routing. The selected five had v3 routes at that review. Venue availability can change, and supported assets can change through governance. The Basket page shows the configured vault's actual holdings.",
         ],
       },
@@ -231,7 +232,7 @@ export const articles: Article[] = [
         id: "market",
         title: "Market and issuer risk",
         body: [
-          "The basket is concentrated in five growth companies. Asset values can fall together. Tokenized assets introduce issuer, custody, redemption, regulatory, and transfer-restriction risks beyond ordinary market movement.",
+          "The basket is concentrated in five growth exposures. Asset values can fall together. Tokenized assets introduce issuer, custody, redemption, regulatory, and transfer-restriction risks beyond ordinary market movement.",
           "USDG also has stablecoin and issuer risks. An idle reserve is not insurance or a guarantee of redemption at a fixed price.",
         ],
       },

@@ -31,7 +31,7 @@ test("demo deposits, USDG exits and in-kind exits update balances", async () => 
   const before = await a.read(demoAccount);
   assert.deepEqual(
     before.holdings.map((h) => h.symbol),
-    ["NVDA", "AAPL", "GOOGL", "AMD", "NFLX"],
+    ["NVDA", "AAPL", "GOOGL", "QQQ", "NFLX"],
   );
   await a.execute("deposit", 100000000n, demoAccount, () => {});
   assert.equal((await a.read(demoAccount)).shares, before.shares + 100000000n);

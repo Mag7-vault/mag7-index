@@ -31,12 +31,12 @@ https://voxelithic.xyz on 2026-09-03 — not guessed:
 **Several Mag7 names can't be held on a v3-only vault today.** MSFT isn't in
 Voxelithic's token list at all, and META, TSLA, and AMZN (all listed) only quote
 on v4 pools — IndexVault v1 executes v3 routes only. The basket therefore ships
-as an equal-weight five (NVDA, AAPL, GOOGL, AMD, NFLX), each with a live v3 USDG
+as an equal-weight five (NVDA, AAPL, GOOGL, QQQ, NFLX), each with a live v3 USDG
 pool (verified 2026-09-05). Routing is volatile — names migrate v3<->v4 within a
 day — but the vault fails safe when a leg goes v4: deposits, redeems, and NAV are
 unaffected; only that leg's on-chain rebalance swap pauses until it returns to v3
-or is swapped out. To grow it, add a name with a live v3 venue (MU and the
-QQQ/SPY ETFs are v3 today; PLTR/MSTR/COIN/TSM are v4).
+or is swapped out. To grow it, add a name with a live v3 venue (SPY is v3
+today; AMD/MU/PLTR/MSTR/COIN/TSM are currently v4).
 `script/Deploy.s.sol` has a comment at the top marking where to edit this.
 
 ## Architecture
@@ -134,11 +134,13 @@ Safe's owners, threshold, and separation from deployer/keeper roles.
 Pool discovery and route construction now use Voxelithic's live HTTP API.
 `keeper/routes.snapshot.json` records the latest discovery result, while every
 executable keeper run fetches fresh routes and `minOut` values. On 2026-09-05,
-NVDA, AAPL, GOOGL, and NFLX resolved to v3, but AMD moved to v4. The configured
-basket is therefore **not mainnet-executable** today. Keeper health now checks
-both directions for every basket route and fails closed on any v4 route. Do not
-deploy or open a cap until the basket changes or v4 execution is implemented,
-tested, and independently reviewed.
+NVDA, AAPL, GOOGL, QQQ, and NFLX resolved bidirectionally through v3. The
+configured basket is therefore route-executable at the recorded check. Keeper
+health checks both directions for every basket route and fails closed if a leg
+moves to v4. Repeat that check immediately before every deployment and keeper
+transaction; this snapshot is evidence, not a guarantee of future liquidity.
+The replacement rehearsal is recorded in
+[docs/rehearsal-mainnet-fork-qqq-2026-09-05.md](docs/rehearsal-mainnet-fork-qqq-2026-09-05.md).
 
 ## Testnet
 

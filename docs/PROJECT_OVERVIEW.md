@@ -4,26 +4,28 @@
 
 MAG7 Index Vault is an on-chain index vault being built on Robinhood Chain. It
 allows a user to deposit USDG and receive vault shares representing a
-proportional interest in a basket of tokenized US equities.
+proportional interest in a basket of tokenized US equity exposures.
 
 Instead of buying and managing every asset separately, the user holds one
 ERC-4626 vault share while the system handles allocation and rebalancing.
 
 ## Current basket
 
-The first version uses five equally weighted tokenized equities:
+The first version uses five equally weighted tokenized market assets:
 
 - NVIDIA (NVDA)
 - Apple (AAPL)
 - Alphabet (GOOGL)
-- Advanced Micro Devices (AMD)
+- Invesco QQQ ETF (QQQ)
 - Netflix (NFLX)
 
 Microsoft is not in the integrated token list, and Meta, Tesla, and Amazon
 currently route only through Voxelithic v4 pools that this version does not yet
-execute. The first release therefore ships five large-cap tech names that have
-live v3 USDG pools; broader "Magnificent Seven" coverage can be added once v4
-routing lands.
+execute. QQQ replaces the previous AMD sleeve because QQQ currently has a live
+v3 USDG route. QQQ is an ETF exposure rather than a single company and contains
+some of the other basket names, so the economic exposure is not five independent
+single-stock positions. Broader "Magnificent Seven" coverage can be added once
+v4 routing lands.
 
 ## How it works
 
@@ -79,8 +81,9 @@ security-review handoff package have been built. The current automated suite pas
 
 The project is still **pre-production**. It has not been opened for public
 deposits and has not completed an independent professional audit. The latest
-route preflight also marks the configured AMD basket leg as v4-only, which
-blocks a v3-only mainnet launch until the basket or execution layer changes.
+route preflight confirms the QQQ replacement and the other four basket legs
+currently execute bidirectionally through v3. Route health remains a mandatory
+pre-deployment check because venue routing can change.
 
 ## What remains before launch
 

@@ -71,7 +71,7 @@ contract DeployTestnetDemo is Script {
         IndexVault vault = new IndexVault(IERC20(address(usdg)), IVoxRouter(address(router)), oracle, deployer, cap);
 
         address[] memory basket = new address[](5);
-        string[5] memory symbols = ["dNVDA", "dAAPL", "dGOOGL", "dAMD", "dNFLX"];
+        string[5] memory symbols = ["dNVDA", "dAAPL", "dGOOGL", "dQQQ", "dNFLX"];
         uint16[] memory weights = new uint16[](5);
         uint256[] memory prices = new uint256[](5);
         for (uint256 i = 0; i < 5; i++) {

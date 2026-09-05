@@ -7,7 +7,7 @@ import { getSigner } from "./signer.mjs";
 import { sendAlert } from "./notify.mjs";
 
 const ORACLE_ABI = ["function postPrices(address[] tokens,uint256[] priceUsdg18) external"];
-const DEFAULT_BASKET = ["NVDA", "AAPL", "GOOGL", "AMD", "NFLX"];
+const DEFAULT_BASKET = ["NVDA", "AAPL", "GOOGL", "QQQ", "NFLX"];
 
 async function main() {
   const rpcUrl = process.env.ROBINHOOD_MAINNET_RPC;

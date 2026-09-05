@@ -151,7 +151,7 @@ warm.
 ## 6. Stand up the keeper
 
 - Wire keeper `.env`: `INDEX_VAULT_ADDRESS`, `PRICE_ORACLE_ADDRESS`,
-  `BASKET_SYMBOLS=NVDA,AAPL,GOOGL,AMD,NFLX`, slippage/impact/tolerance defaults,
+  `BASKET_SYMBOLS=NVDA,AAPL,GOOGL,QQQ,NFLX`, slippage/impact/tolerance defaults,
   `ALERT_WEBHOOK_URL`, signer config.
 - **Prices:** schedule `npm run post-prices` on a cadence well under
   `maxStaleness` (default 1h) — e.g. every 10–15 min. Each run does a

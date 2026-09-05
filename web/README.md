@@ -17,7 +17,7 @@ Claude's Anvil fixture on chain 31337, port 8545. Remove or rename that override
 to review the in-memory demo locally. Invalid overrides return an error, not
 demo balances. Production preview does not use this override.
 
-The agreed initial basket is NVDA, AAPL, GOOGL, AMD, NFLX at 2000 bps each.
+The agreed initial basket is NVDA, AAPL, GOOGL, QQQ, NFLX at 2000 bps each.
 Live holdings and weights still come from the configured contract.
 
 `public/deployment.json` is `null` by default: this deliberately selects the

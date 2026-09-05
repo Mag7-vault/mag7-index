@@ -9,7 +9,7 @@ const stockColors: Record<string, string> = {
   TSLA: "#ff5264",
   GOOGL: "#4285f4",
   AMZN: "#ff9900",
-  AMD: "#ed5058",
+  QQQ: "#0057b8",
   NFLX: "#ff4054",
 };
 function stockStyle(symbol: string): CSSProperties {

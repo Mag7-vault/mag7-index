@@ -81,3 +81,6 @@ trusted `rebalance` path remains available for larger reviewed moves.
 
 The committed `routes.snapshot.json` is discovery evidence, not execution
 configuration. Routes and minimum outputs are always refreshed at run time.
+Swap deadlines are derived from the latest chain block, not the host clock.
+When a batch simulation fails, the keeper also simulates each leg separately
+and reports the failing token pair before it refuses to broadcast.

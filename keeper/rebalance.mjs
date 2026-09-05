@@ -54,7 +54,9 @@ async function main() {
   }
   const targetIdle = (estimatedNav * BigInt(bufferBps) + 9_999n) / 10_000n;
   const toleranceBps = BigInt(process.env.REBALANCE_TOLERANCE_BPS ?? "25");
-  const deadline = Math.floor(Date.now() / 1000) + Number(process.env.SWAP_DEADLINE_SECONDS ?? "300");
+  const latestBlock = await provider.getBlock("latest");
+  if (!latestBlock) throw new Error("Unable to read latest block for swap deadline");
+  const deadline = latestBlock.timestamp + Number(process.env.SWAP_DEADLINE_SECONDS ?? "300");
   const slippageBps = Number(process.env.MAX_SLIPPAGE_BPS ?? "100");
   const maxPriceImpactBps = Number(process.env.MAX_PRICE_IMPACT_BPS ?? "100");
   const legs = [];
@@ -116,8 +118,23 @@ async function main() {
       navUsdg: decimalFromRaw(estimatedNav, 6),
     });
   } catch (error) {
-    await sendAlert("error", `${mode} failed`, { vault: vaultAddress, reason: error.message ?? String(error) });
-    throw error;
+    const failedLegs = [];
+    for (let i = 0; i < legs.length; i += 1) {
+      try {
+        if (restore) await connectedVault.restoreLiquidity.staticCall([legs[i]]);
+        else await connectedVault.rebalance.staticCall([legs[i]]);
+      } catch (legError) {
+        failedLegs.push({
+          index: i,
+          tokenIn: legs[i].tokenIn,
+          tokenOut: legs[i].tokenOut,
+          reason: legError.shortMessage ?? legError.message ?? String(legError),
+        });
+      }
+    }
+    const reason = error.shortMessage ?? error.message ?? String(error);
+    await sendAlert("error", `${mode} failed`, { vault: vaultAddress, reason, failedLegs });
+    throw new Error(`${reason}${failedLegs.length ? `; failing legs: ${JSON.stringify(failedLegs)}` : "; every individual leg passed; check batch-level reserve/NAV constraints"}`);
   }
 }
 
