@@ -74,6 +74,25 @@ Live reads after scheduling returned `isOperationPending(...) == true` for
 both IDs. Execution must use the exact targets, payloads, predecessors, and
 salts recorded by these operations. Do not execute before the ready timestamp.
 
+## Deposit-cap schedule — 2026-09-06
+
+The Safe scheduled a `1,000 USDG` canary deposit cap (`1_000_000_000` base
+units) through the timelock. The operation is pending and becomes executable
+at Unix timestamp `1788864760`: **2026-09-08 11:52:40 WAT**
+(`2026-09-08 10:52:40 UTC`).
+
+- Operation ID:
+  `0x443f088527b4535da48ed7a05c815f01c354a75abd9820cb08f801705d533587`
+- Target: IndexVault
+  `0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8`
+- Payload: `setDepositCap(1_000_000_000)`
+- Predecessor: `bytes32(0)`
+- Salt:
+  `0x685b74baab18706ea555e05bf83659c336b0c5f87c9bad37a5feda00a1d5c196`
+
+On Tuesday, execute and verify both ownership-acceptance operations first.
+Only then execute this matured cap operation. Do not recreate or reschedule it.
+
 ## Keeper activation and deployer recovery — 2026-09-06
 
 - Deployer funded the oracle keeper with `0.006 ETH`:
