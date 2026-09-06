@@ -10,7 +10,7 @@ import {
   units,
   validate,
 } from "../src/model";
-import { searchArticles } from "../src/docs";
+import { projectArticles, searchArticles } from "../src/docs";
 import { vaultReaction, RELEASE_MS } from "../src/flowTiming";
 test("vault reacts only after deposit arrival and settles before release", () => {
   assert.deepEqual(vaultReaction(-1), { turn: 0, charge: 0 });
@@ -98,6 +98,10 @@ test("documentation search checks article bodies and missing results", () => {
     searchArticles("portion of the vault").some(
       (a) => a.slug === "withdrawals",
     ),
+  );
+  assert.ok(projectArticles.some((a) => a.slug === "project-contracts"));
+  assert.ok(
+    searchArticles("latestRoundData").some((a) => a.slug === "project-oracle"),
   );
   assert.equal(searchArticles("xyz-no-match-123").length, 0);
 });

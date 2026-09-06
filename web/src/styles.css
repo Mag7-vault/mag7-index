@@ -984,7 +984,33 @@ td small {
   padding: 40px 25px;
   border-right: 1px solid var(--line);
 }
-.docs-sidebar > nav {
+.docs-sidebar .docs-audience-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 4px;
+  border: 1px solid var(--line);
+}
+.docs-sidebar .docs-audience-switch a {
+  padding: 10px 8px;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+.docs-sidebar .docs-audience-switch a[aria-current] {
+  color: var(--bg);
+  background: var(--lime);
+}
+.docs-nav-group {
+  margin-top: 24px;
+}
+.docs-nav-group > .micro {
+  display: block;
+  margin: 0 10px 8px;
+  color: var(--muted);
+}
+.docs-nav-group nav {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1432,6 +1458,9 @@ td small {
     border-right: 0;
     border-bottom: 1px solid var(--line);
     padding: 24px;
+  }
+  .docs-nav-group {
+    margin-top: 18px;
   }
   .docs-sidebar nav {
     display: grid;

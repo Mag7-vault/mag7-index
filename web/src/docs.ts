@@ -5,7 +5,7 @@ export type Article = {
   sections: { id: string; title: string; body: string[] }[];
 };
 
-export const articles: Article[] = [
+export const userArticles: Article[] = [
   {
     slug: "overview",
     title: "How MAG7 works",
@@ -271,6 +271,239 @@ export const articles: Article[] = [
     ],
   },
 ];
+
+export const projectArticles: Article[] = [
+  {
+    slug: "project-overview",
+    title: "Project overview",
+    summary: "The product, its scope and the first mainnet release.",
+    sections: [
+      {
+        id: "purpose",
+        title: "Purpose",
+        body: [
+          "MAG7 Index Vault packages a basket of tokenized market exposures into one on-chain share position on Robinhood Chain. USDG is the entry asset, MAG7 is the vault share, and the vault records each holder's proportional ownership.",
+          "The first release focuses on a small, understandable basket and a controlled launch. It is not a brokerage account, an issuer of company stock or an officially affiliated Robinhood product.",
+        ],
+      },
+      {
+        id: "release",
+        title: "Version one",
+        body: [
+          "The launch basket is NVIDIA, Apple, Alphabet, QQQ and Netflix. Each targets 20% of the invested portion, while at least 20% of vault value is intended to remain in USDG after rebalancing.",
+          "MAG7 uses Voxelithic's v3 routes for basket trades. QQQ replaced AMD because the selected QQQ route was executable in the final mainnet-fork rehearsal. Broader asset support can follow when additional route families are integrated.",
+        ],
+      },
+      {
+        id: "scope",
+        title: "What ships separately",
+        body: [
+          "The vault is the public product. The price layer is currently an internal service that supports vault valuation; it should not yet be marketed as a general-purpose oracle network.",
+          "Oracle V2 is a separate roadmap item covering multiple reporters, median or quorum pricing, per-asset limits, richer price metadata and a standard integration interface.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-architecture",
+    title: "System architecture",
+    summary: "How deposits, prices, trades and exits fit together.",
+    sections: [
+      {
+        id: "flow",
+        title: "Core flow",
+        body: [
+          "A user deposits USDG into IndexVault and receives MAG7 shares. A price service obtains current Voxelithic quotes and records them in PriceOracle. A separate rebalance service builds approved Voxelithic trades that move the vault toward its target basket.",
+          "The vault values its holdings from stored prices, enforces the configured basket and reserve rules, and limits each action to the permissions built into the contracts.",
+        ],
+      },
+      {
+        id: "components",
+        title: "Main components",
+        body: [
+          "IndexVault handles deposits, shares, portfolio value, USDG redemptions, in-kind exits and approved rebalances. PriceOracle stores timestamped prices and refuses missing, zero or stale values.",
+          "The keeper package posts prices, checks routes and health, and prepares rebalances. Voxelithic supplies the external quote and execution paths. The web app reads the deployed contracts and asks the connected wallet to sign user transactions.",
+        ],
+      },
+      {
+        id: "boundaries",
+        title: "Trust boundaries",
+        body: [
+          "Price posting, rebalancing and governance use separate wallets. A price reporter cannot change vault configuration, and a rebalance operator cannot change ownership or the basket.",
+          "External dependencies include Robinhood Chain, USDG, the basket-token issuers, Voxelithic routes, the RPC provider, browser wallets and the operational keeper runner.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-contracts",
+    title: "Mainnet contracts",
+    summary: "Canonical addresses for the Robinhood Chain deployment.",
+    sections: [
+      {
+        id: "addresses",
+        title: "Deployment addresses",
+        body: [
+          "IndexVault: 0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+          "PriceOracle: 0x117C44F8Ed3E57490c14B475ba086c58A2335778",
+          "Timelock: 0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
+          "Governance Safe and guardian: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
+          "Canonical USDG: 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+        ],
+      },
+      {
+        id: "identity",
+        title: "Release identity",
+        body: [
+          "Network: Robinhood Chain mainnet, chain ID 4663. Initial deployment block: 55387046. Solidity compiler: 0.8.26.",
+          "The mainnet deployment was created from frozen candidate e1c7d91fd8dfa7818ef639c77aa3809903a54dc5. Public source verification on Blockscout remains a launch task until the explorer displays matching verified source.",
+        ],
+      },
+      {
+        id: "verify",
+        title: "How to verify",
+        body: [
+          "Use robinhoodchain.blockscout.com and confirm the full address, network and bytecode before relying on a contract. Do not trust an address copied from an unofficial post or direct message.",
+          "The Vault page also displays the configured vault, USDG, price and router addresses read from the active deployment.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-oracle",
+    title: "Pricing and oracle",
+    summary: "How version one prices the vault and where V2 goes next.",
+    sections: [
+      {
+        id: "v1",
+        title: "Version-one price flow",
+        body: [
+          "Voxelithic exposes quotes for off-chain callers. The MAG7 price keeper reads those quotes and posts timestamped prices to PriceOracle so IndexVault can value its holdings during contract calls.",
+          "Held assets require a non-zero price that is still inside the allowed age. If a required price is unavailable or too old, dependent valuation and deposit actions fail instead of silently using it.",
+        ],
+      },
+      {
+        id: "limitations",
+        title: "Current limitations",
+        body: [
+          "Version one relies on one authorized price reporter and one primary quote path. Freshness checks prevent old data from being accepted as current, but freshness alone does not prove that a price is correct.",
+          "Keeper uptime, gas funding, RPC availability and route health are operational requirements. In-kind exits avoid a live price dependency and remain the final user escape path.",
+        ],
+      },
+      {
+        id: "v2",
+        title: "Oracle V2 roadmap",
+        body: [
+          "V2 is intended to add multiple independent reporters, median or quorum aggregation, maximum deviation rules, per-asset circuit breakers and explicit round, source, decimal and heartbeat information.",
+          "A Chainlink-compatible latestRoundData interface would make the resulting feed easier for other Robinhood Chain applications to consume. This work is planned, not part of the deployed V1 claim set.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-governance",
+    title: "Governance and safety",
+    summary: "Roles, delayed changes, pause controls and user exits.",
+    sections: [
+      {
+        id: "governance",
+        title: "Safe and timelock",
+        body: [
+          "Production governance uses a 2-of-3 Safe. Approved configuration changes are scheduled through a 48-hour timelock before execution.",
+          "The Safe is the timelock proposer and executor and also acts as the vault guardian. The original deployer is not a timelock administrator.",
+        ],
+      },
+      {
+        id: "roles",
+        title: "Separated roles",
+        body: [
+          "The oracle keeper posts prices. The rebalance keeper executes permitted basket trades. The guardian can pause deposits and rebalancing. Governance controls configuration and can replace compromised operators.",
+          "The deployer, keeper wallets and Safe owners are intentionally separate. Private keys and RPC credentials are never stored in the public web build.",
+        ],
+      },
+      {
+        id: "exits",
+        title: "Safety exits",
+        body: [
+          "A pause blocks deposits and rebalancing but does not confiscate shares. Ordinary USDG redemption remains available within current liquidity when valuation works.",
+          "In-kind Exit burns shares and returns the holder's proportional USDG and basket tokens without requiring current prices. Token transfer restrictions can still affect delivery.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-status",
+    title: "Deployment status",
+    summary: "What is live, what is closed and what remains before deposits.",
+    sections: [
+      {
+        id: "live",
+        title: "Live now",
+        body: [
+          "The contracts and public interface are deployed on Robinhood Chain mainnet. The basket, Safe, guardian and 48-hour timelock are configured. The pause and recovery flow has been executed successfully on mainnet.",
+          "The vault is unpaused but the deposit cap remains zero, so public deposits are closed. A connected wallet does not change that status.",
+        ],
+      },
+      {
+        id: "scheduled",
+        title: "Scheduled activation",
+        body: [
+          "The oracle and vault ownership-acceptance operations become executable on 8 September 2026 at 00:24:57 WAT. They must be executed and verified before the deposit cap changes.",
+          "The scheduled 1,000 USDG canary cap becomes executable on 8 September 2026 at 11:52:40 WAT. It must not be recreated or executed early.",
+        ],
+      },
+      {
+        id: "gates",
+        title: "Remaining launch gates",
+        body: [
+          "Before deposits open: restore reliable fresh price posting, fund the operational wallets, verify contract source on Blockscout, complete the two ownership handovers and execute the existing cap operation.",
+          "After activation: run one small deposit, rebalance and withdrawal canary, confirm the live interface and only then change public messaging from pre-launch to deposits open.",
+        ],
+      },
+      {
+        id: "review",
+        title: "Review status",
+        body: [
+          "The automated contract, keeper and web test suites have passed, and the mainnet-fork rehearsal completed against the final five-asset basket.",
+          "The operator waived independent external-audit approval and webhook alerting for the initial gate. That decision does not make the system independently audited or fully monitored, and public claims must not imply otherwise.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "project-development",
+    title: "Development reference",
+    summary: "Repository structure, verification commands and release flow.",
+    sections: [
+      {
+        id: "layout",
+        title: "Repository layout",
+        body: [
+          "src contains the Solidity contracts. test contains Foundry tests. script contains deployment and handover scripts. keeper contains price, route, health and rebalance services. web contains the React interface. docs contains runbooks, deployment evidence and security-review material.",
+          "Generated contract ABIs are synchronized into the web build with the repository's ABI sync command after contract compilation changes.",
+        ],
+      },
+      {
+        id: "checks",
+        title: "Required checks",
+        body: [
+          "Contracts: forge test. Keeper: run npm test inside keeper. Website: run npm test, npm run build and npm run test:sites inside web.",
+          "Mainnet operations also require a current health check, correct chain ID, reviewed transaction data, sufficient gas and receipt verification. A passing build alone is not launch approval.",
+        ],
+      },
+      {
+        id: "release-flow",
+        title: "Release flow",
+        body: [
+          "Website releases are committed to GitHub main and deployed to the existing Vercel production project. The public URL is mag7-index.vercel.app.",
+          "Contract changes require a new reviewed candidate, fresh tests and deployment evidence. A website release does not modify deployed contract code or governance state.",
+        ],
+      },
+    ],
+  },
+];
+
+export const articles: Article[] = [...userArticles, ...projectArticles];
 
 export function searchArticles(query: string) {
   const q = query.trim().toLowerCase();

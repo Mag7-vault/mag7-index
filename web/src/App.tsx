@@ -10,7 +10,12 @@ import {
 } from "lucide-react";
 import { Diagram } from "./Diagram";
 import { Transaction } from "./Transaction";
-import { articles, searchArticles } from "./docs";
+import {
+  articles,
+  projectArticles,
+  searchArticles,
+  userArticles,
+} from "./docs";
 import { initialBasketPreview, percent, units } from "./model";
 import { useVault, type VaultContext } from "./useVault";
 function Holdings({ ctx }: { ctx: VaultContext }) {
@@ -233,10 +238,40 @@ function Docs({ path }: { path: string }) {
   const slug = path.split("/")[2] || "overview";
   const a = articles.find((a) => a.slug === slug);
   const results = searchArticles(query);
+  const showingProjectDocs = !!a && projectArticles.includes(a);
+  const visibleResults = query.trim()
+    ? results
+    : showingProjectDocs
+      ? projectArticles
+      : userArticles;
+  const userResults = userArticles.filter((article) =>
+    visibleResults.includes(article),
+  );
+  const projectResults = projectArticles.filter((article) =>
+    visibleResults.includes(article),
+  );
+  const currentGroup =
+    a && projectArticles.includes(a) ? projectArticles : userArticles;
+  const currentLabel =
+    currentGroup === projectArticles ? "Project documentation" : "User guide";
   return (
     <div className="docs-layout">
       <aside className="docs-sidebar">
-        <span className="micro">MAG7 / User guide</span>
+        <span className="micro">MAG7 / Documentation</span>
+        <nav className="docs-audience-switch" aria-label="Documentation type">
+          <a
+            href="/docs/overview"
+            aria-current={!showingProjectDocs ? "page" : undefined}
+          >
+            User guide
+          </a>
+          <a
+            href="/docs/project-overview"
+            aria-current={showingProjectDocs ? "page" : undefined}
+          >
+            Project docs
+          </a>
+        </nav>
         <label className="search-field">
           <Search size={16} />
           <input
@@ -246,17 +281,38 @@ function Docs({ path }: { path: string }) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <nav aria-label="Documentation articles">
-          {results.map((r) => (
-            <a
-              key={r.slug}
-              href={`/docs/${r.slug}`}
-              aria-current={r.slug === slug ? "page" : undefined}
-            >
-              {r.title}
-            </a>
-          ))}
-        </nav>
+        {!!userResults.length && (
+          <div className="docs-nav-group">
+            <span className="micro">User guide</span>
+            <nav aria-label="User guide articles">
+              {userResults.map((r) => (
+                <a
+                  key={r.slug}
+                  href={`/docs/${r.slug}`}
+                  aria-current={r.slug === slug ? "page" : undefined}
+                >
+                  {r.title}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+        {!!projectResults.length && (
+          <div className="docs-nav-group">
+            <span className="micro">Project documentation</span>
+            <nav aria-label="Project documentation articles">
+              {projectResults.map((r) => (
+                <a
+                  key={r.slug}
+                  href={`/docs/${r.slug}`}
+                  aria-current={r.slug === slug ? "page" : undefined}
+                >
+                  {r.title}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
         {!results.length && (
           <p>No matching articles. Try “withdraw” or “reserve”.</p>
         )}
@@ -265,7 +321,8 @@ function Docs({ path }: { path: string }) {
         {a ? (
           <>
             <span className="micro">
-              Documentation / {String(articles.indexOf(a) + 1).padStart(2, "0")}
+              {currentLabel} /{" "}
+              {String(currentGroup.indexOf(a) + 1).padStart(2, "0")}
             </span>
             <h1>{a.title}</h1>
             <p className="doc-lead">{a.summary}</p>
