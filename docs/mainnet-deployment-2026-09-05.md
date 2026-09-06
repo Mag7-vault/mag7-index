@@ -90,8 +90,10 @@ salts recorded by these operations. Do not execute before the ready timestamp.
   was unpaused, and the deposit cap remained zero.
 - A temporary local scheduled task, `MAG7 Oracle Prices`, runs price posting
   plus health verification every 30 minutes through 2026-09-07 17:00 WAT.
-  It uses the rate-limited public RPC until the authenticated production RPC is
-  repaired; this task is deadline support, not durable production hosting.
+  Its authenticated Alchemy Robinhood Chain mainnet RPC was verified against
+  chain ID `4663` on 2026-09-06. The task reads that endpoint from the ignored
+  repository `.env`; this task is deadline support, not durable production
+  hosting.
 
 ## Explicit operator waivers and remaining gates
 

@@ -23,8 +23,6 @@ foreach ($line in Get-Content -LiteralPath $environmentFile) {
     [Environment]::SetEnvironmentVariable($name, $value, "Process")
 }
 
-# Temporary non-secret fallback until the authenticated production RPC is fixed.
-$env:ROBINHOOD_MAINNET_RPC = "https://rpc.mainnet.chain.robinhood.com"
 $env:ALERT_WEBHOOK_URL = ""
 
 Set-Location -LiteralPath $keeperDirectory
