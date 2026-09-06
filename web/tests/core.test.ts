@@ -93,9 +93,11 @@ test("a changed wallet session stops pending demo execution", async () => {
   assert.equal((await a.read(demoAccount)).shares, before.shares);
 });
 test("documentation search checks article bodies and missing results", () => {
-  assert.ok(searchArticles("timelock").length);
+  assert.ok(searchArticles("48 hours").length);
   assert.ok(
-    searchArticles("proportional").some((a) => a.slug === "withdrawals"),
+    searchArticles("portion of the vault").some(
+      (a) => a.slug === "withdrawals",
+    ),
   );
   assert.equal(searchArticles("xyz-no-match-123").length, 0);
 });

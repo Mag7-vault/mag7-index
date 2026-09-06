@@ -4,66 +4,66 @@ export type Article = {
   summary: string;
   sections: { id: string; title: string; body: string[] }[];
 };
+
 export const articles: Article[] = [
   {
     slug: "overview",
-    title: "Meet MAG7",
-    summary: "Five growth exposures. One on-chain position.",
+    title: "How MAG7 works",
+    summary: "Five market exposures in one vault position.",
     sections: [
       {
-        id: "what-you-own",
+        id: "simple",
+        title: "The simple version",
+        body: [
+          "You deposit USDG and receive MAG7 shares. Those shares represent your portion of the assets held by the vault.",
+          "The vault spreads invested funds equally across NVIDIA, Apple, Alphabet, QQQ and Netflix, while keeping part of the vault in USDG for withdrawals.",
+        ],
+      },
+      {
+        id: "what-you-hold",
         title: "What you hold",
         body: [
-          "MAG7 is an ERC-4626 vault. Deposit USDG to receive transferable MAG7 shares representing a proportional claim on the assets held by the vault. Share value changes with the underlying holdings; returns are not guaranteed.",
-          "A vault share is not direct ownership of company stock. The basket contains tokenized-equity assets, whose issuer terms and restrictions must be understood separately.",
+          "You hold MAG7 vault shares, not company shares in a brokerage account. Their value can rise or fall with the vault's holdings.",
+          "QQQ is an ETF and includes some of the same companies already named in the basket, so the five exposures are not completely separate from one another.",
         ],
       },
       {
-        id: "five-assets",
-        title: "Why five, not seven?",
+        id: "check-first",
+        title: "Before you continue",
         body: [
-          "The initial basket is NVIDIA (NVDA), Apple (AAPL), Alphabet (GOOGL), the Invesco QQQ ETF (QQQ), and Netflix (NFLX). Each targets 20% of the invested basket, not 20% of the entire vault.",
-          "QQQ is an ETF exposure rather than a single company and includes some of the other basket names. The five sleeves therefore overlap economically even though each vault asset has the same target weight.",
-          "The current integration executes Voxelithic v3 routes. At the September 5, 2026 integration review, Microsoft was unavailable in the integrated token list; Meta, Tesla and Amazon required v4 routing. The selected five had v3 routes at that review. Venue availability can change, and supported assets can change through governance. The Basket page shows the configured vault's actual holdings.",
-        ],
-      },
-      {
-        id: "review-mode",
-        title: "Preview and live environments",
-        body: [
-          "A Demo label means balances and transactions are simulated in this browser. No wallet signature or funds are required for a demo. Reloading resets it.",
-          "Configured deployments read the vault directly. Testnet and local deployments are mechanics tests, not evidence of mainnet liquidity or launch approval. Check the environment and contract address before using funds.",
+          "Check that the site shows Robinhood Chain mainnet and that deposits are available. A connected wallet does not automatically mean deposits are open.",
+          "Only use an amount you can afford to keep exposed to market, token and smart-contract risks.",
         ],
       },
     ],
   },
   {
     slug: "wallet",
-    title: "Connect your wallet",
-    summary: "Accounts, networks, and network fees.",
+    title: "Connect safely",
+    summary: "Choose the right wallet, account and network.",
     sections: [
       {
         id: "connect",
-        title: "Choose a browser wallet",
+        title: "Connect your wallet",
         body: [
-          "Select Connect wallet and choose an installed wallet. Approve sharing the account you want to use. Connecting does not grant token spending permission.",
-          "This version supports injected browser wallets, including compatible wallet-app browsers. Mobile QR connections are not included. Install a wallet from its official source if none is detected.",
+          "Select Connect wallet and choose the account you want to use. Connecting lets the site read that account; it does not move your money.",
+          "Never share your private key or recovery phrase. MAG7 support should never ask for either one.",
         ],
       },
       {
         id: "network",
-        title: "Use the correct network",
+        title: "Check the network",
         body: [
-          "The site uses the network in its deployment configuration. Robinhood mainnet uses chain 4663; the project testnet uses 46630. A local fixture may use 31337.",
-          "Use Switch network when prompted. Obtain the configured native gas token through the network’s official resources and use official testnet faucets only for testnet funds. This site does not bridge or sell gas tokens.",
+          "The live vault uses Robinhood Chain mainnet. Use Switch network if your wallet is connected to another network.",
+          "You need a small amount of the network's native token to pay transaction fees. USDG cannot pay those fees.",
         ],
       },
       {
-        id: "account",
-        title: "Account changes and disconnecting",
+        id: "disconnect",
+        title: "Changing or disconnecting",
         body: [
-          "Changing an account or network clears the active preview. Review the refreshed balances before submitting again.",
-          "Disconnect removes this site’s active session. It does not revoke an existing on-chain token allowance; manage allowances through your wallet if needed.",
+          "If you change accounts or networks, review your balance and transaction again before signing.",
+          "Disconnecting the site does not cancel a transaction that was already submitted and does not automatically remove an earlier token approval.",
         ],
       },
     ],
@@ -71,154 +71,147 @@ export const articles: Article[] = [
   {
     slug: "deposits",
     title: "Deposit USDG",
-    summary: "Understand approvals, previews, and vault shares.",
+    summary: "Review the amount, approve USDG and receive MAG7 shares.",
     sections: [
       {
         id: "steps",
-        title: "Make a deposit",
+        title: "How to deposit",
         body: [
-          "Connect a wallet, open Vault → Deposit, and enter a USDG amount. The site checks your balance and the vault’s remaining deposit capacity. Select Review to see the estimated shares.",
-          "If needed, approve only the entered USDG amount for the vault. Approval is a separate transaction with its own network fee. After it confirms, the app refreshes limits and the share preview, simulates the deposit, then requests your deposit transaction.",
+          "Connect your wallet, open Vault → Deposit, enter an amount and select Review deposit.",
+          "Your first deposit may require two wallet confirmations: one to allow the vault to use the entered USDG amount, and another to make the deposit.",
+          "Wait for confirmation, then refresh your position. Your MAG7 share balance will appear when the transaction has been processed.",
         ],
       },
       {
-        id: "shares",
-        title: "How shares are calculated",
+        id: "preview",
+        title: "About the preview",
         body: [
-          "Shares represent your proportional interest in the vault, not a guaranteed one-USDG price. The contract determines their quantity using its current valuation and ERC-4626 accounting.",
-          "Previews are estimates. The current deposit and redemption methods do not include a user-supplied minimum-output bound; the final result can change before transaction execution. The app rechecks immediately before requesting a signature, but cannot eliminate that risk.",
+          "The share amount shown before you sign is an estimate. It can change slightly before the transaction is completed.",
+          "MAG7 shares are not fixed at one USDG. Their value depends on the assets held by the vault.",
         ],
       },
       {
-        id: "closed",
-        title: "When deposits are unavailable",
+        id: "unavailable",
+        title: "If deposits are unavailable",
         body: [
-          "A zero or exhausted deposit cap, a paused vault, or unavailable required prices can prevent deposits. A connected wallet alone does not mean deposits are open.",
-          "Deposits initially enter as USDG. The keeper later trades to rebalance the basket; the animated flow is an explanation, not a live transaction trace.",
+          "Deposits may be closed, temporarily paused or at their current limit. The page will show when the vault is not accepting more USDG.",
+          "Do not send USDG directly to the vault address. Always deposit through the Deposit flow in the app.",
         ],
       },
     ],
   },
   {
     slug: "withdrawals",
-    title: "Withdraw and exit",
-    summary: "USDG redemption and direct basket-token exits.",
+    title: "Withdraw or exit",
+    summary: "Choose USDG or receive your portion of the basket.",
     sections: [
       {
         id: "usdg",
-        title: "Redeem for available USDG",
+        title: "Withdraw as USDG",
         body: [
-          "Enter MAG7 shares in the Redeem USDG tab. The site reads the contract’s maxRedeem and maxWithdraw limits rather than assuming the entire vault is immediately liquid.",
-          "If your withdrawal exceeds the available USDG, reduce the amount, wait for keeper sell-down, or consider an in-kind exit. There is no withdrawal queue or guaranteed waiting period in this version.",
+          "Open Redeem USDG, enter the MAG7 shares you want to redeem and review the amount available before signing.",
+          "The vault keeps some USDG ready for withdrawals, but it may not be enough for every request immediately. The app shows the amount currently available to you.",
         ],
       },
       {
         id: "in-kind",
-        title: "Exit in kind",
+        title: "Receive the basket instead",
         body: [
-          "In-kind Exit burns your shares and returns your proportional share of idle USDG and every basket token. Review each token quantity before confirming. This does not automatically sell those tokens for USDG.",
-          "The in-kind preview does not need fresh oracle prices. It remains available when valuations are stale and while the vault is paused, subject to your share balance and successful token transfers. Token transfer restrictions can still affect an exit.",
+          "If enough USDG is not available, In-kind Exit lets you exchange MAG7 shares for your portion of the vault's USDG and basket tokens.",
+          "This option does not sell those basket tokens for you. You receive them in your wallet and may need to sell them separately if you want USDG.",
         ],
       },
       {
-        id: "pause",
-        title: "Exits during a pause",
+        id: "important",
+        title: "Important to know",
         body: [
-          "A pause blocks deposits and rebalancing. It does not itself block ordinary USDG redemption within the available liquidity. Standard exits still require the necessary valuation reads to succeed.",
-          "Network fees apply to exits. Quotes are estimates; the existing methods do not accept a minimum amount-out parameter.",
+          "There is no guaranteed waiting time or guaranteed USDG amount. Market movement, available liquidity and token restrictions can affect your exit.",
+          "Always check the token amounts and wallet transaction details before confirming. Network fees apply.",
         ],
       },
     ],
   },
   {
     slug: "allocation",
-    title: "Weights and rebalancing",
-    summary: "The distinction between basket weights and vault allocation.",
+    title: "The basket and reserve",
+    summary: "See where the vault aims to hold its assets.",
     sections: [
       {
-        id: "weights",
-        title: "20% of the basket",
+        id: "basket",
+        title: "The five basket targets",
         body: [
-          "Five equal basket weights sum to 100% of the invested portion. When 20% of the vault is idle USDG and 80% is invested, a 20% basket target corresponds to approximately 16% of total vault value for each stock.",
-          "Current allocations can differ because of price movement, deposits, withdrawals, or partial rebalances. The Basket page separates target weights from actual vault weights.",
+          "The invested part of the vault targets 20% each in NVIDIA, Apple, Alphabet, QQQ and Netflix.",
+          "That 20% is a share of the invested basket, not the whole vault. If 20% of the vault is held as USDG, each balanced basket position is about 16% of the total vault value.",
         ],
       },
       {
         id: "reserve",
-        title: "The USDG reserve",
+        title: "Why the vault keeps USDG",
         body: [
-          "At least 20% of NAV must remain idle USDG after each keeper rebalance. This is a post-rebalance requirement, not a promise that the balance can never fall below 20%. Redemptions can consume the reserve.",
-          "The keeper can sell basket assets back to USDG to restore liquidity. The dedicated restoration path can operate without fresh oracle prices, but it is blocked while paused.",
+          "After rebalancing, the vault is designed to keep at least 20% in USDG to support ordinary withdrawals.",
+          "Withdrawals can reduce that reserve, so 20% is not a promise that the same amount will always be available.",
         ],
       },
       {
-        id: "modes",
-        title: "Static and market-cap modes",
+        id: "changes",
+        title: "Why the live balance can differ",
         body: [
-          "The initial configuration uses static equal weights. The contracts also support governance-enabled market-cap weighting, a single-name cap, and controlled permissionless rebalancing. These should not be assumed active.",
-          "The interface reads the current weight mode and resolved weights from the contract. Missing market-cap data is shown as unavailable, not replaced with equal weights.",
+          "Prices move and people deposit or withdraw, so actual holdings may differ from their targets between rebalances.",
+          "Use the Basket page for the latest holdings and available reserve shown by the vault.",
         ],
       },
     ],
   },
   {
     slug: "valuation",
-    title: "Prices and NAV",
-    summary: "What a valuation means and when it is unavailable.",
+    title: "Your balance and value",
+    summary: "Understand estimates and unavailable prices.",
     sections: [
       {
-        id: "nav",
-        title: "Net asset value",
+        id: "estimate",
+        title: "Your position estimate",
         body: [
-          "NAV is idle USDG plus held basket tokens valued using the vault’s on-chain oracle. Your position estimate is derived from contract share accounting. It is not a guaranteed sale price.",
-          "A keeper obtains Voxelithic quotes off-chain and posts prices to PriceOracle. The vault does not call the revert-to-return quoter inside totalAssets.",
+          "The app estimates your position from your MAG7 shares and the latest prices available to the vault. It is not a guaranteed sale price.",
+          "Prices and liquidity can change between the preview and the completed transaction.",
         ],
       },
       {
-        id: "freshness",
-        title: "Price freshness",
+        id: "unavailable",
+        title: "If a value says unavailable",
         body: [
-          "The oracle has a configurable staleness limit. Missing or stale prices for held tokens cause valuation reads to fail rather than silently display outdated values.",
-          "When required valuations are unavailable, the UI removes the estimate and blocks dependent actions. Raw balances and in-kind token previews can still be shown.",
-        ],
-      },
-      {
-        id: "risks",
-        title: "Quotes and execution",
-        body: [
-          "Market liquidity, price impact, token restrictions, and delays can change realizable value. Oracle freshness is not a guarantee of price accuracy.",
-          "The site refreshes visible data periodically and after transactions. The last update time identifies the displayed snapshot; it is not a promise of continuous live pricing.",
+          "The app hides estimates when a required price is missing or too old instead of showing an outdated value as current.",
+          "You can still view raw holdings and may still be able to use In-kind Exit. Do not continue with a transaction you do not understand.",
         ],
       },
     ],
   },
   {
     slug: "governance",
-    title: "Governance and status",
-    summary: "Controls, contract addresses, and launch status.",
+    title: "Safety and status",
+    summary: "How changes are controlled and what a pause means.",
     sections: [
       {
-        id: "roles",
-        title: "Who controls what?",
+        id: "controls",
+        title: "Changes are delayed",
         body: [
-          "Governance can change permitted configuration through the owner. The intended production setup uses a Safe multisig and a timelock; deployment and ownership handover must be verified for the specific contract.",
-          "A guardian can pause deposits and rebalancing. Unpausing and configuration changes belong to the owner. Price and rebalance keeper roles have separate responsibilities.",
+          "Important vault changes require approval from more than one owner and then wait 48 hours before they can take effect.",
+          "A safety operator can pause new deposits and rebalancing if there is a problem.",
         ],
       },
       {
-        id: "addresses",
-        title: "Verify the deployment",
+        id: "pause",
+        title: "What happens during a pause",
         body: [
-          "The Vault page shows configured chain and contract addresses, deriving asset, oracle, and router addresses from the vault. Use explorer links to inspect the selected deployment.",
-          "A matching interface or wallet connection is not an audit certificate. The repository identifies the project as pre-production; no independent approval or public launch date is inferred by this site.",
+          "A pause stops new deposits and rebalancing. It does not take away your MAG7 shares.",
+          "USDG withdrawals may still work when enough USDG and a current value are available. In-kind Exit is intended to remain available even when prices are unavailable.",
         ],
       },
       {
         id: "privacy",
-        title: "Local connection and privacy",
+        title: "Privacy",
         body: [
-          "No account registration is required. Wallet addresses and transaction information are sent to the configured RPC provider when contract mode is used. Blockchain transactions are public.",
-          "Demo activity stays in browser memory. The site stores only your motion preference locally and does not include analytics. Your wallet and RPC provider may have their own privacy practices.",
+          "No account registration is required. Your wallet address and transactions are public on the blockchain.",
+          "Your wallet and network provider may process connection information under their own privacy terms. Never put private keys or recovery phrases into this site.",
         ],
       },
     ],
@@ -226,60 +219,59 @@ export const articles: Article[] = [
   {
     slug: "risks",
     title: "Understand the risks",
-    summary: "Read before moving funds.",
+    summary: "Read this before moving funds.",
     sections: [
       {
         id: "market",
-        title: "Market and issuer risk",
+        title: "Value can fall",
         body: [
-          "The basket is concentrated in five growth exposures. Asset values can fall together. Tokenized assets introduce issuer, custody, redemption, regulatory, and transfer-restriction risks beyond ordinary market movement.",
-          "USDG also has stablecoin and issuer risks. An idle reserve is not insurance or a guarantee of redemption at a fixed price.",
+          "The basket is concentrated in five growth-focused exposures, and several can fall at the same time. QQQ also overlaps with some basket companies.",
+          "USDG and tokenized market assets carry their own issuer, custody, liquidity, transfer and regulatory risks.",
         ],
       },
       {
-        id: "protocol",
-        title: "Protocol and operational risk",
+        id: "technology",
+        title: "Technology can fail",
         body: [
-          "Smart contracts, governance, wallets, RPC providers, keepers, oracles, and external routers can fail or be compromised. A stale or inaccurate price can affect availability or value.",
-          "Liquidity can be insufficient for immediate USDG redemption. In-kind exits transfer the basket assets to you and may leave you responsible for selling them.",
+          "Smart contracts, wallets, price updates, network providers and trading services can fail, be delayed or be compromised.",
+          "Available USDG may be insufficient for an immediate withdrawal. An in-kind exit can leave you holding tokens that may be difficult or restricted to sell.",
         ],
       },
       {
-        id: "review",
-        title: "Before proceeding",
+        id: "responsibility",
+        title: "Review every transaction",
         body: [
-          "Confirm the environment, contract address, amount, token outputs, and wallet transaction details. Use only amounts whose risks you understand.",
-          "This documentation explains software behavior. It does not provide investment advice, promise returns, or substitute for the token issuers’ terms or an independent audit.",
+          "Confirm the network, amount, destination and expected tokens in your wallet before signing. Blockchain transactions usually cannot be reversed.",
+          "MAG7 does not guarantee returns and this guide is not investment advice or an independent security audit.",
         ],
       },
     ],
   },
   {
     slug: "help",
-    title: "Troubleshooting and glossary",
-    summary: "Common states, clear explanations.",
+    title: "Help",
+    summary: "Common problems and what to do next.",
     sections: [
       {
-        id: "errors",
+        id: "common",
         title: "Common problems",
         body: [
-          "No wallet found: open the site in a compatible browser with a wallet installed. Wrong network: switch to the configured chain. Request declined: review the amount and retry when ready.",
-          "Insufficient gas: obtain the correct native token. Deposit closed: check pause and cap status. Valuation unavailable: wait for fresh prices or review an in-kind exit. Insufficient USDG liquidity: lower the exit amount or review the alternatives.",
-          "A pending transaction is not a confirmed transaction. Check its status in your wallet or explorer. Changing accounts during submission does not cancel an already broadcast transaction.",
+          "Wrong network: switch to Robinhood Chain mainnet. Insufficient gas: add the network's native token. Request declined: review the transaction and try again when ready.",
+          "Deposit unavailable: the vault may be closed, paused or at its limit. Balance unavailable: wait for updated pricing. Not enough USDG to withdraw: lower the amount or review In-kind Exit.",
         ],
       },
       {
-        id: "glossary",
-        title: "Glossary",
+        id: "pending",
+        title: "Pending transactions",
         body: [
-          "USDG: the vault’s base asset. MAG7: the vault share token. NAV: the total oracle-valued assets held by the vault. ERC-4626: a standard tokenized-vault interface.",
-          "Keeper: an authorized service that posts prices or executes rebalances. Oracle: on-chain price storage. Basis points: one hundredth of a percent; 2,000 bps equals 20%.",
-          "In-kind exit: receipt of the underlying tokens instead of a USDG-only payout. Timelock: a delay before scheduled governance actions can execute.",
+          "A submitted transaction is not complete until your wallet or the explorer shows it as confirmed.",
+          "Changing accounts or closing the page does not cancel a transaction that has already been submitted.",
         ],
       },
     ],
   },
 ];
+
 export function searchArticles(query: string) {
   const q = query.trim().toLowerCase();
   return articles.filter((a) =>
