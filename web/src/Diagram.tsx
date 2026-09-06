@@ -24,11 +24,13 @@ export function Diagram({
   reserve,
   motion,
   onMotion,
+  syncing = false,
 }: {
   holdings: Holding[];
   reserve: number;
   motion: boolean;
   onMotion: () => void;
+  syncing?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -181,6 +183,11 @@ export function Diagram({
     >
       <div className="flow-heading">
         <span className="micro">Illustrative allocation flow</span>
+        {syncing && (
+          <span className="flow-sync micro" role="status">
+            Syncing live data
+          </span>
+        )}
         <button
           className="text-button micro"
           onClick={onMotion}

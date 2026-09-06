@@ -77,6 +77,19 @@ export const names: Record<string, string> = {
   QQQ: "Invesco QQQ",
   NFLX: "Netflix",
 };
+export const initialBasketPreview: Holding[] = Object.entries(names).map(
+  ([symbol, name], index) => ({
+    address: `preview-${index}`,
+    symbol,
+    name,
+    decimals: 18,
+    balance: 0n,
+    weight: 2000,
+    value: null,
+    priceAt: 0,
+    stale: true,
+  }),
+);
 export const demoAccount = "0x000000000000000000000000000000000000dEaD";
 export function units(value: bigint | null, decimals = 6, digits = 2) {
   if (value === null) return "Unavailable";

@@ -5,6 +5,7 @@ import {
   amountFromInput,
   demoAccount,
   friendlyError,
+  initialBasketPreview,
   parseDeployment,
   units,
   validate,
@@ -19,6 +20,18 @@ test("vault reacts only after deposit arrival and settles before release", () =>
   assert.equal(vaultReaction(2800).turn, 90);
   assert.ok(RELEASE_MS > 2800);
   assert.equal(vaultReaction(6999).turn, vaultReaction(7000).turn);
+});
+test("initial basket preview renders the known targets before RPC data", () => {
+  assert.deepEqual(
+    initialBasketPreview.map(({ symbol, weight }) => [symbol, weight]),
+    [
+      ["NVDA", 2000],
+      ["AAPL", 2000],
+      ["GOOGL", 2000],
+      ["QQQ", 2000],
+      ["NFLX", 2000],
+    ],
+  );
 });
 test("amounts preserve integer precision and reject unsafe input", () => {
   assert.equal(amountFromInput("123.000001", 6), 123000001n);

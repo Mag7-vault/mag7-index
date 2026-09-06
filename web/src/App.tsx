@@ -11,7 +11,7 @@ import {
 import { Diagram } from "./Diagram";
 import { Transaction } from "./Transaction";
 import { articles, searchArticles } from "./docs";
-import { percent, units } from "./model";
+import { initialBasketPreview, percent, units } from "./model";
 import { useVault, type VaultContext } from "./useVault";
 function Holdings({ ctx }: { ctx: VaultContext }) {
   const s = ctx.snapshot;
@@ -462,20 +462,13 @@ export function App() {
                 <div className="hero flow-only">
                   <h1 className="sr-only">MAG7 Index Vault</h1>
                   <div className="hero-flow">
-                    {s ? (
-                      <Diagram
-                        holdings={s.holdings}
-                        reserve={s.reserveBps}
-                        motion={motion}
-                        onMotion={toggle}
-                      />
-                    ) : (
-                      <div className="loading-diagram">
-                        {ctx.error
-                          ? "Capital flow unavailable"
-                          : "Loading vault composition…"}
-                      </div>
-                    )}
+                    <Diagram
+                      holdings={s?.holdings ?? initialBasketPreview}
+                      reserve={s?.reserveBps ?? 2000}
+                      motion={motion}
+                      onMotion={toggle}
+                      syncing={!s && !ctx.error}
+                    />
                     <aside className="execution">
                       <span className="micro">Execution layer</span>
                       <h3>VOX V3 ROUTER</h3>

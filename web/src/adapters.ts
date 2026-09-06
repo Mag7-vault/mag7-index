@@ -61,11 +61,12 @@ export class ContractAdapter implements VaultAdapter {
     this.vault = new Contract(config.vaultAddress, vaultAbi, this.provider);
   }
   async read(account: string | null): Promise<Snapshot> {
-    if (
-      Number((await this.provider.getNetwork()).chainId) !== this.config.chainId
-    )
+    const [network, block] = await Promise.all([
+      this.provider.getNetwork(),
+      this.provider.getBlock("latest"),
+    ]);
+    if (Number(network.chainId) !== this.config.chainId)
       throw new Error("RPC network does not match deployment configuration.");
-    const block = await this.provider.getBlock("latest");
     if (!block) throw new Error("RPC did not return the latest block.");
     if (
       block.number < this.config.deploymentBlock ||
