@@ -1,0 +1,41 @@
+name: Oracle Keeper
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mag7-mainnet-oracle-keeper
+  cancel-in-progress: false
+
+jobs:
+  post-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: keeper
+    env:
+      ROBINHOOD_MAINNET_RPC: ${{ secrets.MAG7_ROBINHOOD_MAINNET_RPC }}
+      ORACLE_KEEPER_PRIVATE_KEY: ${{ secrets.MAG7_ORACLE_KEEPER_PRIVATE_KEY }}
+      PRICE_ORACLE_ADDRESS: ${{ vars.MAG7_PRICE_ORACLE_ADDRESS }}
+      INDEX_VAULT_ADDRESS: ${{ vars.MAG7_INDEX_VAULT_ADDRESS }}
+      BASKET_SYMBOLS: NVDA,AAPL,GOOGL,QQQ,NFLX
+      KEEPER_SIGNER_KIND: raw
+      ALERT_WEBHOOK_URL: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: keeper/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Post oracle prices
+        run: npm run post-prices
+      - name: Verify keeper health
+        run: npm run health

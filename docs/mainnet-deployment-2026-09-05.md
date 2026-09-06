@@ -92,8 +92,12 @@ salts recorded by these operations. Do not execute before the ready timestamp.
   plus health verification every 30 minutes through 2026-09-07 17:00 WAT.
   Its authenticated Alchemy Robinhood Chain mainnet RPC was verified against
   chain ID `4663` on 2026-09-06. The task reads that endpoint from the ignored
-  repository `.env`; this task is deadline support, not durable production
-  hosting.
+  repository `.env`; it remains only as a short-lived fallback.
+- The durable `Oracle Keeper` GitHub Actions workflow runs at minutes 7, 22, 37,
+  and 52 of every hour from the private repository. It reads the Alchemy RPC
+  and scoped oracle key from encrypted repository secrets, posts prices, and
+  requires the follow-up health check to pass. It does not receive the deployer
+  or rebalance keeper keys.
 
 ## Explicit operator waivers and remaining gates
 
