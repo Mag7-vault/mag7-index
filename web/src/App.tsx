@@ -442,8 +442,12 @@ export function App() {
         Skip to content
       </a>
       <header className="header">
-        <a className="brand" href="/">
-          <strong>MAG7 INDEX VAULT</strong>
+        <a className="brand" href="/" aria-label="MAG7 Index Vault home">
+          <img
+            className="brand-logo"
+            src="/brand/mag7-wordmark-white.png"
+            alt="MAG7"
+          />
           <span>Index infrastructure</span>
         </a>
         <nav className={menu ? "open" : ""} aria-label="Main navigation">
