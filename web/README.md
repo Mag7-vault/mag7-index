@@ -5,7 +5,7 @@ React/Vite + TypeScript frontend implementing the selected Index Infrastructure 
 ## Local preview
 
 Run `npm ci`, then `npm run dev -- --port 4180`. The site includes Overview,
-Vault, Basket, Mechanics, and nine searchable documentation articles.
+Vault, Basket, Mechanics, and separate searchable user and technical documentation.
 `npm run build` writes the static site to `dist/client`.
 
 ## Connect a deployment

@@ -103,6 +103,15 @@ test("documentation search checks article bodies and missing results", () => {
   assert.ok(
     searchArticles("latestRoundData").some((a) => a.slug === "project-oracle"),
   );
+  for (const slug of [
+    "project-status",
+    "project-interface",
+    "project-verification",
+    "project-failures",
+    "project-changelog",
+    "project-development",
+  ])
+    assert.ok(!projectArticles.some((article) => article.slug === slug));
   assert.equal(searchArticles("xyz-no-match-123").length, 0);
 });
 test("wallet errors and replacement receipts are explicit", async () => {

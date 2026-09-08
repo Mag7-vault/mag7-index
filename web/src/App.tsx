@@ -238,22 +238,18 @@ function Docs({ path }: { path: string }) {
   const slug = path.split("/")[2] || "overview";
   const a = articles.find((a) => a.slug === slug);
   const results = searchArticles(query);
-  const showingProjectDocs = !!a && projectArticles.includes(a);
+  const showingTechnical = !!a && projectArticles.includes(a);
   const visibleResults = query.trim()
     ? results
-    : showingProjectDocs
+    : showingTechnical
       ? projectArticles
       : userArticles;
-  const userResults = userArticles.filter((article) =>
+  const visibleUserArticles = userArticles.filter((article) =>
     visibleResults.includes(article),
   );
-  const projectResults = projectArticles.filter((article) =>
+  const visibleProjectArticles = projectArticles.filter((article) =>
     visibleResults.includes(article),
   );
-  const currentGroup =
-    a && projectArticles.includes(a) ? projectArticles : userArticles;
-  const currentLabel =
-    currentGroup === projectArticles ? "Project documentation" : "User guide";
   return (
     <div className="docs-layout">
       <aside className="docs-sidebar">
@@ -261,15 +257,15 @@ function Docs({ path }: { path: string }) {
         <nav className="docs-audience-switch" aria-label="Documentation type">
           <a
             href="/docs/overview"
-            aria-current={!showingProjectDocs ? "page" : undefined}
+            aria-current={!showingTechnical ? "page" : undefined}
           >
             User guide
           </a>
           <a
             href="/docs/project-overview"
-            aria-current={showingProjectDocs ? "page" : undefined}
+            aria-current={showingTechnical ? "page" : undefined}
           >
-            Project docs
+            Technical docs
           </a>
         </nav>
         <label className="search-field">
@@ -281,11 +277,11 @@ function Docs({ path }: { path: string }) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        {!!userResults.length && (
+        {!!visibleUserArticles.length && (
           <div className="docs-nav-group">
-            <span className="micro">User guide</span>
-            <nav aria-label="User guide articles">
-              {userResults.map((r) => (
+            <span className="micro">Using MAG7</span>
+            <nav aria-label="Using MAG7 articles">
+              {visibleUserArticles.map((r) => (
                 <a
                   key={r.slug}
                   href={`/docs/${r.slug}`}
@@ -297,11 +293,13 @@ function Docs({ path }: { path: string }) {
             </nav>
           </div>
         )}
-        {!!projectResults.length && (
-          <div className="docs-nav-group">
-            <span className="micro">Project documentation</span>
-            <nav aria-label="Project documentation articles">
-              {projectResults.map((r) => (
+        {!!visibleProjectArticles.length && (
+          <div
+            className={`docs-nav-group${visibleUserArticles.length ? " docs-nav-technical" : ""}`}
+          >
+            <span className="micro">Technical reference</span>
+            <nav aria-label="Technical reference articles">
+              {visibleProjectArticles.map((r) => (
                 <a
                   key={r.slug}
                   href={`/docs/${r.slug}`}
@@ -321,8 +319,7 @@ function Docs({ path }: { path: string }) {
         {a ? (
           <>
             <span className="micro">
-              {currentLabel} /{" "}
-              {String(currentGroup.indexOf(a) + 1).padStart(2, "0")}
+              Documentation / {String(articles.indexOf(a) + 1).padStart(2, "0")}
             </span>
             <h1>{a.title}</h1>
             <p className="doc-lead">{a.summary}</p>
@@ -342,6 +339,74 @@ function Docs({ path }: { path: string }) {
                 {s.body.map((p) => (
                   <p key={p}>{p}</p>
                 ))}
+                {s.blocks?.map((block, index) => {
+                  if (block.type === "code")
+                    return (
+                      <div className="doc-code" key={`${s.id}-code-${index}`}>
+                        {block.label && (
+                          <span className="micro">{block.label}</span>
+                        )}
+                        <pre>
+                          <code>{block.code}</code>
+                        </pre>
+                      </div>
+                    );
+                  if (block.type === "links")
+                    return (
+                      <div className="doc-links" key={`${s.id}-links-${index}`}>
+                        {block.items.map((item) => (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={item.href}
+                          >
+                            <span>{item.label}</span>
+                            {item.note && <small>{item.note}</small>}
+                            <ArrowUpRight size={15} />
+                          </a>
+                        ))}
+                      </div>
+                    );
+                  if (block.type === "table")
+                    return (
+                      <div
+                        className="doc-table-wrap"
+                        key={`${s.id}-table-${index}`}
+                      >
+                        <table>
+                          <thead>
+                            <tr>
+                              {block.columns.map((column) => (
+                                <th key={column}>{column}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {block.rows.map((row, rowIndex) => (
+                              <tr key={`${s.id}-row-${rowIndex}`}>
+                                {row.map((cell, cellIndex) => (
+                                  <td
+                                    key={`${s.id}-cell-${rowIndex}-${cellIndex}`}
+                                  >
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  return (
+                    <aside className="doc-note" key={`${s.id}-note-${index}`}>
+                      {block.label && (
+                        <span className="micro">{block.label}</span>
+                      )}
+                      <p>{block.text}</p>
+                    </aside>
+                  );
+                })}
               </section>
             ))}
             <a href="/vault" className="inline-link">
@@ -407,7 +472,7 @@ export function App() {
     };
   }, []);
   useEffect(() => {
-    document.title = `MAG7 — ${path.startsWith("/docs") ? "User documentation" : path === "/vault" ? "Your vault" : "Index Infrastructure"}`;
+    document.title = `MAG7 — ${path.startsWith("/docs") ? "Documentation" : path === "/vault" ? "Your vault" : "Index Infrastructure"}`;
     if (location.hash)
       document
         .getElementById(decodeURIComponent(location.hash.slice(1)))

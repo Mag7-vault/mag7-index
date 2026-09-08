@@ -1,8 +1,34 @@
+export type DocBlock =
+  | {
+      type: "code";
+      label?: string;
+      code: string;
+    }
+  | {
+      type: "links";
+      items: { label: string; href: string; note?: string }[];
+    }
+  | {
+      type: "table";
+      columns: string[];
+      rows: string[][];
+    }
+  | {
+      type: "note";
+      label?: string;
+      text: string;
+    };
+
 export type Article = {
   slug: string;
   title: string;
   summary: string;
-  sections: { id: string; title: string; body: string[] }[];
+  sections: {
+    id: string;
+    title: string;
+    body: string[];
+    blocks?: DocBlock[];
+  }[];
 };
 
 export const userArticles: Article[] = [
@@ -316,6 +342,13 @@ export const projectArticles: Article[] = [
           "A user deposits USDG into IndexVault and receives MAG7 shares. A price service obtains current Voxelithic quotes and records them in PriceOracle. A separate rebalance service builds approved Voxelithic trades that move the vault toward its target basket.",
           "The vault values its holdings from stored prices, enforces the configured basket and reserve rules, and limits each action to the permissions built into the contracts.",
         ],
+        blocks: [
+          {
+            type: "code",
+            label: "System flow",
+            code: "User --USDG--> IndexVault --keeper--> VoxRouter --> liquidity pools\n                   ^                                      |\n                   |                                      v\n              PriceOracle <--- price keeper <--- Voxelithic quotes",
+          },
+        ],
       },
       {
         id: "components",
@@ -344,11 +377,61 @@ export const projectArticles: Article[] = [
         id: "addresses",
         title: "Deployment addresses",
         body: [
-          "IndexVault: 0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
-          "PriceOracle: 0x117C44F8Ed3E57490c14B475ba086c58A2335778",
-          "Timelock: 0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
-          "Governance Safe and guardian: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
-          "Canonical USDG: 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+          "These are the canonical addresses recorded for the first Robinhood Chain mainnet deployment. Always compare the complete address before interacting.",
+        ],
+        blocks: [
+          {
+            type: "table",
+            columns: ["Component", "Address", "Purpose"],
+            rows: [
+              [
+                "IndexVault",
+                "0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+                "ERC-4626 shares, deposits and exits",
+              ],
+              [
+                "PriceOracle",
+                "0x117C44F8Ed3E57490c14B475ba086c58A2335778",
+                "Timestamped USDG prices",
+              ],
+              [
+                "Timelock",
+                "0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
+                "48-hour governance delay",
+              ],
+              [
+                "Safe / guardian",
+                "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
+                "2-of-3 approvals and emergency pause",
+              ],
+              [
+                "USDG",
+                "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+                "Vault accounting and deposit asset",
+              ],
+            ],
+          },
+          {
+            type: "links",
+            items: [
+              {
+                label: "IndexVault on Blockscout",
+                href: "https://robinhoodchain.blockscout.com/address/0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+              },
+              {
+                label: "PriceOracle on Blockscout",
+                href: "https://robinhoodchain.blockscout.com/address/0x117C44F8Ed3E57490c14B475ba086c58A2335778",
+              },
+              {
+                label: "Timelock on Blockscout",
+                href: "https://robinhoodchain.blockscout.com/address/0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
+              },
+              {
+                label: "Governance Safe on Blockscout",
+                href: "https://robinhoodchain.blockscout.com/address/0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
+              },
+            ],
+          },
         ],
       },
       {
@@ -366,6 +449,13 @@ export const projectArticles: Article[] = [
           "Use robinhoodchain.blockscout.com and confirm the full address, network and bytecode before relying on a contract. Do not trust an address copied from an unofficial post or direct message.",
           "The Vault page also displays the configured vault, USDG, price and router addresses read from the active deployment.",
         ],
+        blocks: [
+          {
+            type: "note",
+            label: "Source status",
+            text: "Repository records show exact Sourcify matches for IndexVault and PriceOracle. Blockscout source publication remains a separate explorer-indexing task until its contract pages display matching verified source.",
+          },
+        ],
       },
     ],
   },
@@ -378,8 +468,15 @@ export const projectArticles: Article[] = [
         id: "v1",
         title: "Version-one price flow",
         body: [
-          "Voxelithic exposes quotes for off-chain callers. The MAG7 price keeper reads those quotes and posts timestamped prices to PriceOracle so IndexVault can value its holdings during contract calls.",
+          "MAG7 reads executable-size quotes through Voxelithic. The price keeper obtains those quotes with an off-chain call and posts timestamped 18-decimal USDG prices to PriceOracle so IndexVault can value its holdings during contract calls.",
           "Held assets require a non-zero price that is still inside the allowed age. If a required price is unavailable or too old, dependent valuation and deposit actions fail instead of silently using it.",
+        ],
+        blocks: [
+          {
+            type: "code",
+            label: "PriceOracle read surface",
+            code: "postPrices(address[] tokens, uint256[] priceUsdg18)\ngetPrice(address token) returns (uint256 priceUsdg)\nprices(address token) returns (uint192 priceUsdg, uint64 updatedAt)\nmaxStaleness() returns (uint256)",
+          },
         ],
       },
       {
@@ -388,6 +485,13 @@ export const projectArticles: Article[] = [
         body: [
           "Version one relies on one authorized price reporter and one primary quote path. Freshness checks prevent old data from being accepted as current, but freshness alone does not prove that a price is correct.",
           "Keeper uptime, gas funding, RPC availability and route health are operational requirements. In-kind exits avoid a live price dependency and remain the final user escape path.",
+        ],
+        blocks: [
+          {
+            type: "note",
+            label: "Not a public oracle network",
+            text: "PriceOracle V1 accepts one authorized reporting path. It is a vault dependency, not a manipulation-resistant, multi-reporter feed for unrelated protocols.",
+          },
         ],
       },
       {
@@ -420,6 +524,39 @@ export const projectArticles: Article[] = [
           "The oracle keeper posts prices. The rebalance keeper executes permitted basket trades. The guardian can pause deposits and rebalancing. Governance controls configuration and can replace compromised operators.",
           "The deployer, keeper wallets and Safe owners are intentionally separate. Private keys and RPC credentials are never stored in the public web build.",
         ],
+        blocks: [
+          {
+            type: "table",
+            columns: ["Role", "Can", "Cannot"],
+            rows: [
+              [
+                "Governance Safe",
+                "Approve delayed configuration changes",
+                "Bypass the timelock for owner-only setters",
+              ],
+              [
+                "Guardian",
+                "Pause deposits and rebalancing",
+                "Unpause or rewrite configuration",
+              ],
+              [
+                "Oracle keeper",
+                "Post prices and market caps",
+                "Move vault assets or change governance",
+              ],
+              [
+                "Rebalance keeper",
+                "Execute permitted basket trades",
+                "Change ownership, basket rules or oracle reporters",
+              ],
+              [
+                "User",
+                "Deposit, redeem or exit in kind",
+                "Call keeper-only or owner-only operations",
+              ],
+            ],
+          },
+        ],
       },
       {
         id: "exits",
@@ -431,76 +568,6 @@ export const projectArticles: Article[] = [
       },
     ],
   },
-  {
-    slug: "project-status",
-    title: "Deployment status",
-    summary: "What is live, what is closed and what remains before deposits.",
-    sections: [
-      {
-        id: "live",
-        title: "Live now",
-        body: [
-          "The contracts and public interface are deployed on Robinhood Chain mainnet. The basket, Safe, guardian and 48-hour timelock are configured. The pause and recovery flow has been executed successfully on mainnet.",
-          "The vault is unpaused but the deposit cap remains zero, so public deposits are closed. A connected wallet does not change that status.",
-        ],
-      },
-      {
-        id: "scheduled",
-        title: "Scheduled activation",
-        body: [
-          "The oracle and vault ownership-acceptance operations become executable on 8 September 2026 at 00:24:57 WAT. They must be executed and verified before the deposit cap changes.",
-          "The scheduled 1,000 USDG canary cap becomes executable on 8 September 2026 at 11:52:40 WAT. It must not be recreated or executed early.",
-        ],
-      },
-      {
-        id: "gates",
-        title: "Remaining launch gates",
-        body: [
-          "Before deposits open: restore reliable fresh price posting, fund the operational wallets, verify contract source on Blockscout, complete the two ownership handovers and execute the existing cap operation.",
-          "After activation: run one small deposit, rebalance and withdrawal canary, confirm the live interface and only then change public messaging from pre-launch to deposits open.",
-        ],
-      },
-      {
-        id: "review",
-        title: "Review status",
-        body: [
-          "The automated contract, keeper and web test suites have passed, and the mainnet-fork rehearsal completed against the final five-asset basket.",
-          "The operator waived independent external-audit approval and webhook alerting for the initial gate. That decision does not make the system independently audited or fully monitored, and public claims must not imply otherwise.",
-        ],
-      },
-    ],
-  },
-  {
-    slug: "project-development",
-    title: "Development reference",
-    summary: "Repository structure, verification commands and release flow.",
-    sections: [
-      {
-        id: "layout",
-        title: "Repository layout",
-        body: [
-          "src contains the Solidity contracts. test contains Foundry tests. script contains deployment and handover scripts. keeper contains price, route, health and rebalance services. web contains the React interface. docs contains runbooks, deployment evidence and security-review material.",
-          "Generated contract ABIs are synchronized into the web build with the repository's ABI sync command after contract compilation changes.",
-        ],
-      },
-      {
-        id: "checks",
-        title: "Required checks",
-        body: [
-          "Contracts: forge test. Keeper: run npm test inside keeper. Website: run npm test, npm run build and npm run test:sites inside web.",
-          "Mainnet operations also require a current health check, correct chain ID, reviewed transaction data, sufficient gas and receipt verification. A passing build alone is not launch approval.",
-        ],
-      },
-      {
-        id: "release-flow",
-        title: "Release flow",
-        body: [
-          "Website releases are committed to GitHub main and deployed to the existing Vercel production project. The public URL is mag7-index.vercel.app.",
-          "Contract changes require a new reviewed candidate, fresh tests and deployment evidence. A website release does not modify deployed contract code or governance state.",
-        ],
-      },
-    ],
-  },
 ];
 
 export const articles: Article[] = [...userArticles, ...projectArticles];
@@ -508,7 +575,21 @@ export const articles: Article[] = [...userArticles, ...projectArticles];
 export function searchArticles(query: string) {
   const q = query.trim().toLowerCase();
   return articles.filter((a) =>
-    [a.title, a.summary, ...a.sections.flatMap((s) => [s.title, ...s.body])]
+    [
+      a.title,
+      a.summary,
+      ...a.sections.flatMap((s) => [
+        s.title,
+        ...s.body,
+        ...(s.blocks ?? []).flatMap((block) => {
+          if (block.type === "code") return [block.label ?? "", block.code];
+          if (block.type === "note") return [block.label ?? "", block.text];
+          if (block.type === "links")
+            return block.items.flatMap((item) => [item.label, item.note ?? ""]);
+          return [...block.columns, ...block.rows.flat()];
+        }),
+      ]),
+    ]
       .join(" ")
       .toLowerCase()
       .includes(q),
