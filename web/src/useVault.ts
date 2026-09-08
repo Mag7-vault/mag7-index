@@ -96,7 +96,6 @@ export function useVault() {
     } catch (e) {
       if (ticket === version.current) {
         setError(friendlyError(e));
-        setSnapshot(null);
       }
     }
   }, [adapter, account, chain]);

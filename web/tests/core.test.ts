@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DemoAdapter, confirmed } from "../src/adapters";
+import { DemoAdapter, confirmed, withRpcRetry } from "../src/adapters";
 import {
   amountFromInput,
   demoAccount,
@@ -75,6 +75,37 @@ test("pause, stale NAV and idle liquidity have distinct exit behavior", async ()
 test("configuration never treats invalid configuration as a demo", () => {
   assert.equal(parseDeployment(null), null);
   assert.throws(() => parseDeployment({ environment: "mainnet" }));
+  const config = parseDeployment({
+    environment: "mainnet",
+    chainId: 4663,
+    rpcUrl: "/api/rpc",
+    vaultAddress: "0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+    deploymentBlock: 55387046,
+    explorerUrl: "https://robinhoodchain.blockscout.com",
+    chainName: "Robinhood Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  });
+  assert.equal(config?.rpcUrl, "http://localhost/api/rpc");
+});
+test("transient RPC failures are retried but contract failures are not", async () => {
+  let attempts = 0;
+  assert.equal(
+    await withRpcRetry(async () => {
+      attempts += 1;
+      if (attempts < 3) throw new TypeError("Failed to fetch");
+      return "ready";
+    }, [0, 0]),
+    "ready",
+  );
+  assert.equal(attempts, 3);
+  await assert.rejects(
+    withRpcRetry(async () => {
+      throw Object.assign(new Error("execution reverted"), {
+        code: "CALL_EXCEPTION",
+      });
+    }, [0, 0]),
+    /execution reverted/,
+  );
 });
 test("a changed wallet session stops pending demo execution", async () => {
   const a = new DemoAdapter();

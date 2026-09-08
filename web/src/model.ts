@@ -154,7 +154,10 @@ export function parseDeployment(raw: unknown): Deployment | null {
     throw new Error("Invalid public deployment configuration.");
   if (c.environment === "mainnet" && c.chainId !== 4663)
     throw new Error("MAG7 mainnet must use chain 4663.");
-  const rpc = new URL(c.rpcUrl);
+  const rpc = new URL(
+    c.rpcUrl,
+    typeof window === "undefined" ? "http://localhost" : window.location.origin,
+  );
   if (
     !["http:", "https:"].includes(rpc.protocol) ||
     rpc.username ||
@@ -163,7 +166,11 @@ export function parseDeployment(raw: unknown): Deployment | null {
     throw new Error("Invalid public RPC URL.");
   if (c.explorerUrl && new URL(c.explorerUrl).protocol !== "https:")
     throw new Error("Explorer must use HTTPS.");
-  return { ...c, vaultAddress: getAddress(c.vaultAddress) };
+  return {
+    ...c,
+    rpcUrl: rpc.href,
+    vaultAddress: getAddress(c.vaultAddress),
+  };
 }
 export function friendlyError(error: unknown): string {
   const e = error as {

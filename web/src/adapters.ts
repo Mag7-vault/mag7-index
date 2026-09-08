@@ -26,6 +26,30 @@ const optional = async <T>(p: Promise<T>): Promise<T | null> => {
     throw e;
   }
 };
+const retryableRpcError = (error: unknown) => {
+  const e = error as { code?: string; message?: string; shortMessage?: string };
+  return (
+    ["NETWORK_ERROR", "SERVER_ERROR", "TIMEOUT", "UNKNOWN_ERROR"].includes(
+      e.code ?? "",
+    ) ||
+    /failed to fetch|fetch failed|network|timeout|429|502|503|504/i.test(
+      `${e.shortMessage ?? ""} ${e.message ?? ""}`,
+    )
+  );
+};
+export async function withRpcRetry<T>(
+  operation: () => Promise<T>,
+  delays = [250, 750],
+): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= delays.length || !retryableRpcError(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+    }
+  }
+}
 export async function confirmed(
   tx: ContractTransactionResponse,
 ): Promise<string> {
@@ -61,6 +85,9 @@ export class ContractAdapter implements VaultAdapter {
     this.vault = new Contract(config.vaultAddress, vaultAbi, this.provider);
   }
   async read(account: string | null): Promise<Snapshot> {
+    return withRpcRetry(() => this.readOnce(account));
+  }
+  private async readOnce(account: string | null): Promise<Snapshot> {
     const [network, block] = await Promise.all([
       this.provider.getNetwork(),
       this.provider.getBlock("latest"),
