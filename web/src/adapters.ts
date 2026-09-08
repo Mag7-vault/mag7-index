@@ -242,6 +242,7 @@ export class ContractAdapter implements VaultAdapter {
     progress: (s: string) => void,
     signer?: Signer,
     isCurrent: () => boolean = () => true,
+    currentState?: Snapshot,
   ): Promise<string> {
     const checkSession = () => {
       if (!isCurrent())
@@ -258,20 +259,27 @@ export class ContractAdapter implements VaultAdapter {
       this.config.chainId
     )
       throw new Error("Switch your wallet to the configured network.");
-    const state = await this.read(account);
+    const state =
+      currentState?.mode === this.mode &&
+      currentState.account?.toLowerCase() === account.toLowerCase() &&
+      currentState.chainId === this.config.chainId &&
+      currentState.vault.toLowerCase() === this.config.vaultAddress.toLowerCase()
+        ? currentState
+        : await this.read(account);
     validate(action, amount, state);
     if (action === "deposit" && state.allowance < amount) {
       const asset = new Contract(state.asset, tokenAbi, signer);
-      progress("Approve this USDG amount in your wallet");
-      await asset.approve.staticCall(this.config.vaultAddress, amount);
+      const approvalAmount =
+        state.maxDeposit !== null && state.maxDeposit > amount
+          ? state.maxDeposit
+          : amount;
+      progress("Approve USDG for deposits in your wallet");
+      await asset.approve.staticCall(this.config.vaultAddress, approvalAmount);
       checkSession();
-      const tx = await asset.approve(this.config.vaultAddress, amount);
+      const tx = await asset.approve(this.config.vaultAddress, approvalAmount);
       progress("Waiting for USDG approval confirmation");
       await confirmed(tx);
     }
-    // Approval and user review may take time: repeat limits, preview and simulation.
-    progress("Refreshing the contract preview");
-    await this.quote(action, amount, account);
     checkSession();
     const v = this.vault.connect(signer) as Contract;
     const method =
@@ -392,6 +400,7 @@ export class DemoAdapter implements VaultAdapter {
     progress: (s: string) => void,
     _signer?: Signer,
     isCurrent: () => boolean = () => true,
+    _currentState?: Snapshot,
   ) {
     const q = await this.quote(action, amount, account);
     progress("Simulating your transaction");

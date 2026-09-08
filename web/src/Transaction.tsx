@@ -5,6 +5,7 @@ import {
   amountFromInput,
   friendlyError,
   units,
+  validate,
   type Action,
   type Quote,
 } from "./model";
@@ -65,20 +66,29 @@ export function Transaction({
     }
   }
   async function submit() {
-    if (!quote || !ctx.adapter || !ctx.account) return;
-    const key = epoch.current;
+    if (!s || !ctx.adapter || !ctx.account) return;
+    const key = ++epoch.current;
     const sessionCurrent = ctx.captureSession();
     setBusy(true);
     setError("");
     setSuccess("");
     try {
+      const amount =
+        quote?.action === action
+          ? quote.amount
+          : amountFromInput(
+              input,
+              action === "deposit" ? s.assetDecimals : s.shareDecimals,
+            );
+      validate(action, amount, s);
       const hash = await ctx.adapter.execute(
         action,
-        quote.amount,
+        amount,
         ctx.account,
         (m) => key === epoch.current && setProgress(m),
         await ctx.signer(),
         () => sessionCurrent() && key === epoch.current,
+        s,
       );
       if (key === epoch.current) {
         setSuccess(hash);
@@ -115,7 +125,7 @@ export function Transaction({
         <p>
           {ctx.adapter?.mode === "demo"
             ? "Explore with simulated funds. No real wallet or money required."
-            : "Your wallet signs every transaction. Review the details before confirming."}
+            : "Enter an amount, then approve the transaction in your wallet."}
         </p>
         {compact && (
           <a className="inline-link" href="/vault">
@@ -255,6 +265,12 @@ export function Transaction({
             sale is performed.
           </p>
         )}
+        {action === "deposit" && ctx.adapter?.mode === "contract" && (
+          <p className="notice">
+            Your first deposit may require a one-time USDG approval. Later
+            deposits use the existing allowance.
+          </p>
+        )}
         {s?.paused && (
           <p className="notice">
             Deposits are paused. Available exit paths remain accessible.
@@ -268,32 +284,36 @@ export function Transaction({
           <button
             className="button primary"
             disabled={busy || (!s && !!ctx.account)}
-            onClick={quote ? submit : review}
+            onClick={action === "inKind" && !quote ? review : submit}
           >
             {busy
-              ? progress || "Reading contract preview…"
-              : quote
+              ? progress || "Preparing wallet confirmation…"
+              : action === "inKind" && quote
                 ? ctx.adapter?.mode === "demo"
                   ? "Confirm demo transaction"
                   : "Confirm in wallet"
                 : ctx.account
-                  ? "Review " +
-                    (action === "deposit"
-                      ? "deposit"
-                      : action === "redeem"
-                        ? "redemption"
-                        : "in-kind exit")
+                  ? action === "deposit"
+                    ? "Deposit USDG"
+                    : action === "redeem"
+                      ? "Redeem USDG"
+                      : "Review in-kind exit"
                   : ctx.adapter?.mode === "demo"
                     ? "Try demo wallet"
                     : "Connect wallet"}
-            {!busy && (quote ? <Check size={16} /> : <Wallet size={16} />)}
+            {!busy &&
+              (action === "inKind" && quote ? (
+                <Check size={16} />
+              ) : (
+                <Wallet size={16} />
+              ))}
           </button>
         )}
         {quote && (
           <p className="notice">
             {ctx.adapter?.mode === "demo"
               ? "Simulation only."
-              : "The app refreshes this estimate before submission. Final output may change; this contract method has no minimum-output parameter."}
+              : "Final output may change; this contract method has no minimum-output parameter."}
           </p>
         )}
         <div aria-live="polite">

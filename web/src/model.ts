@@ -68,6 +68,7 @@ export interface VaultAdapter {
     progress: (message: string) => void,
     runner?: import("ethers").Signer,
     isCurrent?: () => boolean,
+    currentState?: Snapshot,
   ): Promise<string>;
 }
 export const names: Record<string, string> = {

@@ -106,6 +106,19 @@ test(
         s = await adapter.read(account);
         assert.equal(s.shares, 1000000000n);
         assert.equal(s.walletAssets, 9000000000n);
+        assert.ok(s.allowance >= 100n);
+        const secondProgress: string[] = [];
+        await adapter.execute(
+          "deposit",
+          100n,
+          account,
+          (x) => secondProgress.push(x),
+          signer,
+          undefined,
+          s,
+        );
+        assert.ok(!secondProgress.some((message) => message.includes("Approve")));
+        s = await adapter.read(account);
         await assert.rejects(
           () =>
             adapter.execute(
