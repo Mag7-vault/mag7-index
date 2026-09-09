@@ -879,7 +879,17 @@ td small {
 }
 .footer nav {
   display: flex;
+  align-items: center;
   gap: 30px;
+}
+.footer-social {
+  display: inline-flex;
+  color: currentColor;
+}
+.footer-social svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 .page-heading {
   padding: 65px 0 35px;
