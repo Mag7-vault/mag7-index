@@ -233,6 +233,48 @@ function Address({
     </div>
   );
 }
+function ContractAddressBar({ ctx }: { ctx: VaultContext }) {
+  const [copied, setCopied] = useState(false);
+  const config = ctx.config;
+  if (!config || config.environment !== "mainnet") return null;
+  const address = config.vaultAddress;
+  return (
+    <aside
+      className="contract-address-bar"
+      aria-label="Official MAG7 contract address"
+    >
+      <span className="micro">Official MAG7 CA</span>
+      <code title={address}>{address}</code>
+      <div className="contract-address-actions">
+        <button
+          className="icon-button"
+          aria-label="Copy official MAG7 contract address"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(address);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1800);
+            } catch {
+              setCopied(false);
+            }
+          }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+        </button>
+        {config.explorerUrl && (
+          <a
+            className="inline-link"
+            href={`${config.explorerUrl}/address/${address}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Explorer <ArrowUpRight size={13} />
+          </a>
+        )}
+      </div>
+    </aside>
+  );
+}
 function Docs({ path }: { path: string }) {
   const [query, setQuery] = useState("");
   const slug = path.split("/")[2] || "overview";
@@ -570,6 +612,7 @@ export function App() {
           </span>
         </span>
       </div>
+      <ContractAddressBar ctx={ctx} />
       {ctx.error && (
         <div className="error global-error" role="alert">
           {ctx.error}

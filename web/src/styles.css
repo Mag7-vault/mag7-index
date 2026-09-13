@@ -232,6 +232,38 @@ small {
   font-size: 9px;
   letter-spacing: 0.035em;
 }
+.contract-address-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  padding: 13px var(--pad);
+  border-bottom: 1px solid var(--line);
+  background: #c4ee9108;
+}
+.contract-address-bar .micro {
+  color: var(--lime);
+}
+.contract-address-bar code {
+  min-width: 0;
+  overflow: hidden;
+  color: #dce4e8;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.contract-address-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.contract-address-actions .icon-button {
+  min-width: 30px;
+  min-height: 30px;
+}
+.contract-address-actions .inline-link {
+  font-size: 10px;
+}
 .hero {
   display: grid;
   grid-template-columns: 33% 67%;
@@ -1415,6 +1447,17 @@ td small {
   }
 }
 @media (max-width: 650px) {
+  .contract-address-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+  }
+  .contract-address-bar .micro {
+    grid-column: 1 / -1;
+  }
+  .contract-address-actions .inline-link {
+    font-size: 0;
+    gap: 0;
+  }
   .hero-intro {
     display: block;
   }
