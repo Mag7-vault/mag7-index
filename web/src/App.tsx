@@ -236,48 +236,47 @@ function Address({
 function ContractAddressBar({ ctx }: { ctx: VaultContext }) {
   const [copied, setCopied] = useState(false);
   const config = ctx.config;
-  if (!config || config.environment !== "mainnet") return null;
+  if (
+    !config ||
+    config.environment !== "mainnet" ||
+    !config.publicContractAddress
+  )
+    return null;
   const address = config.publicContractAddress;
   return (
     <aside
-      className={`contract-address-bar${address ? "" : " is-disabled"}`}
+      className="contract-address-bar"
       aria-label="Official MAG7 contract address"
     >
       <span className="micro">Official MAG7 CA</span>
-      {address ? (
-        <>
-          <code title={address}>{address}</code>
-          <div className="contract-address-actions">
-            <button
-              className="icon-button"
-              aria-label="Copy official MAG7 contract address"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(address);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1800);
-                } catch {
-                  setCopied(false);
-                }
-              }}
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-            </button>
-            {config.explorerUrl && (
-              <a
-                className="inline-link"
-                href={`${config.explorerUrl}/address/${address}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Explorer <ArrowUpRight size={13} />
-              </a>
-            )}
-          </div>
-        </>
-      ) : (
-        <span className="contract-address-pending">Available after launch</span>
-      )}
+      <code title={address}>{address}</code>
+      <div className="contract-address-actions">
+        <button
+          className="icon-button"
+          aria-label="Copy official MAG7 contract address"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(address);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1800);
+            } catch {
+              setCopied(false);
+            }
+          }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+        </button>
+        {config.explorerUrl && (
+          <a
+            className="inline-link"
+            href={`${config.explorerUrl}/address/${address}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Explorer <ArrowUpRight size={13} />
+          </a>
+        )}
+      </div>
     </aside>
   );
 }
