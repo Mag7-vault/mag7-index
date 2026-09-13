@@ -80,6 +80,7 @@ test("configuration never treats invalid configuration as a demo", () => {
     chainId: 4663,
     rpcUrl: "/api/rpc",
     vaultAddress: "0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
+    publicContractAddress: null,
     deploymentBlock: 55387046,
     explorerUrl: "https://robinhoodchain.blockscout.com",
     chainName: "Robinhood Chain",

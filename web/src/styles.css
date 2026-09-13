@@ -244,6 +244,13 @@ small {
 .contract-address-bar .micro {
   color: var(--lime);
 }
+.contract-address-bar.is-disabled {
+  background: transparent;
+}
+.contract-address-bar.is-disabled .micro,
+.contract-address-pending {
+  color: var(--muted);
+}
 .contract-address-bar code {
   min-width: 0;
   overflow: hidden;

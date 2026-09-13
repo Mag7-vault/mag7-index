@@ -5,6 +5,7 @@ export type Deployment = {
   chainId: number;
   rpcUrl: string;
   vaultAddress: string;
+  publicContractAddress?: string | null;
   deploymentBlock: number;
   explorerUrl: string;
   chainName: string;
@@ -146,6 +147,10 @@ export function parseDeployment(raw: unknown): Deployment | null {
     c.chainId < 1 ||
     !isAddress(c.vaultAddress) ||
     /^0x0{40}$/i.test(c.vaultAddress) ||
+    (c.publicContractAddress !== undefined &&
+      c.publicContractAddress !== null &&
+      (!isAddress(c.publicContractAddress) ||
+        /^0x0{40}$/i.test(c.publicContractAddress))) ||
     !Number.isSafeInteger(c.deploymentBlock) ||
     c.deploymentBlock < 0 ||
     !c.chainName ||
@@ -171,6 +176,9 @@ export function parseDeployment(raw: unknown): Deployment | null {
     ...c,
     rpcUrl: rpc.href,
     vaultAddress: getAddress(c.vaultAddress),
+    publicContractAddress: c.publicContractAddress
+      ? getAddress(c.publicContractAddress)
+      : null,
   };
 }
 export function friendlyError(error: unknown): string {
