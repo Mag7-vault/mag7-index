@@ -3,7 +3,7 @@
     "chainId":  4663,
     "rpcUrl":  "/api/rpc",
     "vaultAddress":  "0xaAF58BD0Dfe5aD5514f421C02959ef44D2fB0ca8",
-    "publicContractAddress":  "0x1ad05e66889b521da49f669d39105c6257d4c20b",
+    "publicContractAddress":  "0xefdc79209c33869329b7144e2c1935d1ddf36aac",
     "deploymentBlock":  55387046,
     "explorerUrl":  "https://robinhoodchain.blockscout.com",
     "chainName":  "Robinhood Chain",
